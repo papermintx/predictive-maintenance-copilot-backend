@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
-import { AiAgentService } from './ai-agent.service';
 import { PrismaModule } from '../common/prisma/prisma.module';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [ConfigModule, PrismaModule],
+  imports: [ConfigModule, PrismaModule, AiModule],
   controllers: [ChatController],
-  providers: [ChatService, AiAgentService],
-  exports: [ChatService, AiAgentService],
+  providers: [ChatService],
+  exports: [ChatService],
 })
 export class ChatModule {}
