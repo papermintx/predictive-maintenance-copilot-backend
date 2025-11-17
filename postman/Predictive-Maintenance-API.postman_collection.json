@@ -55,13 +55,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             },
             "description": "Register a new user account"
           },
@@ -103,13 +98,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signin",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signin"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signin"]
             },
             "description": "Login with email and password"
           },
@@ -128,13 +118,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
             },
             "description": "Get current user profile (requires authentication)"
           },
@@ -174,13 +159,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "refresh"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
             },
             "description": "Get new access token using refresh token"
           },
@@ -205,13 +185,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/reset-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "reset-password"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
             },
             "description": "Send password reset email"
           },
@@ -230,13 +205,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/signout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signout"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signout"]
             },
             "description": "Logout current user (requires authentication)"
           },
@@ -252,13 +222,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/verify-email#access_token=YOUR_ACCESS_TOKEN&refresh_token=YOUR_REFRESH_TOKEN&type=signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "verify-email"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"],
               "hash": "access_token=YOUR_ACCESS_TOKEN&refresh_token=YOUR_REFRESH_TOKEN&type=signup"
             },
             "description": "Returns HTML page that automatically verifies email using tokens from URL hash fragment. This endpoint is called from email confirmation link."
@@ -284,14 +249,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/verify-email/callback",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "verify-email",
-                "callback"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email", "callback"]
             },
             "description": "Backend endpoint that receives parsed tokens from JavaScript and verifies the user's email by checking with Supabase and creating user in local database."
           },
@@ -316,13 +275,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/resend-verification",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "resend-verification"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-verification"]
             },
             "description": "Resend email verification to user who hasn't verified their email yet."
           },
@@ -370,12 +324,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/machines",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "machines"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["machines"]
             },
             "description": "Create new machine (requires admin or operator role)"
           },
@@ -394,12 +344,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/machines?limit=50&offset=0",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "machines"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["machines"],
               "query": [
                 {
                   "key": "limit",
@@ -453,13 +399,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/machines/{{machineId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "machines",
-                "{{machineId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["machines", "{{machineId}}"]
             },
             "description": "Get machine details by ID"
           },
@@ -478,14 +419,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/machines/{{machineId}}/stats",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "machines",
-                "{{machineId}}",
-                "stats"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["machines", "{{machineId}}", "stats"]
             },
             "description": "Get machine statistics including sensor readings and predictions count"
           },
@@ -512,13 +447,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/machines/{{machineId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "machines",
-                "{{machineId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["machines", "{{machineId}}"]
             },
             "description": "Update machine (partial update, requires admin or operator role)"
           },
@@ -537,13 +467,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/machines/{{machineId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "machines",
-                "{{machineId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["machines", "{{machineId}}"]
             },
             "description": "Delete machine (requires admin role)"
           },
@@ -590,12 +515,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/sensors",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sensors"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors"]
             },
             "description": "Create single sensor reading (requires admin or operator role)"
           },
@@ -622,13 +543,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/sensors/batch",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sensors",
-                "batch"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "batch"]
             },
             "description": "Create multiple sensor readings at once (max 100, requires admin or operator role)"
           },
@@ -647,12 +563,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sensors?limit=100&offset=0",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sensors"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors"],
               "query": [
                 {
                   "key": "limit",
@@ -696,13 +608,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sensors/{{sensorUdi}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sensors",
-                "{{sensorUdi}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "{{sensorUdi}}"]
             },
             "description": "Get sensor reading details by UDI (unique data identifier)"
           },
@@ -721,14 +628,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sensors/statistics/{{machineId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sensors",
-                "statistics",
-                "{{machineId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "statistics", "{{machineId}}"]
             },
             "description": "Get sensor statistics for a machine (min, max, avg, median for last 100 readings)"
           },
@@ -747,13 +648,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sensors/{{sensorUdi}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sensors",
-                "{{sensorUdi}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "{{sensorUdi}}"]
             },
             "description": "Delete sensor reading (requires admin role)"
           },
@@ -775,18 +671,230 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                ""
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": [""]
             },
             "description": "Get basic app information"
           },
           "response": []
         }
       ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "AI Test - Multi Machine Overheating Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Mesin mana saja yang berisiko overheat 3 hari kedepan?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat"]
+            },
+            "description": "Test multi-machine query with overheating risk analysis"
+          },
+          "response": []
+        },
+        {
+          "name": "AI Test - Single Machine Status Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Bagaimana kondisi mesin M14860 saat ini?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat"]
+            },
+            "description": "Test single machine condition analysis"
+          },
+          "response": []
+        },
+        {
+          "name": "AI Test - Location-Based Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Mesin di Factory Floor A yang perlu maintenance?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat"]
+            },
+            "description": "Test location-based multi-machine analysis"
+          },
+          "response": []
+        },
+        {
+          "name": "AI Test - Vague Query (Should Ask Clarification)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Bagaimana kondisi mesinnya?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat"]
+            },
+            "description": "Test vague query that should trigger clarification request"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hello AI!\",\n  \"conversationId\": \"{{conversationId}}\",\n  \"machineId\": \"{{machineId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat"]
+            },
+            "description": "Send a message to the AI agent and get a response."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/conversations?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "conversations"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get a list of conversations for the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Conversation by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/conversations/{{conversationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "conversations", "{{conversationId}}"]
+            },
+            "description": "Get details of a specific conversation by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Conversation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/conversations/{{conversationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "conversations", "{{conversationId}}"]
+            },
+            "description": "Delete a specific conversation by ID."
+          },
+          "response": []
+        }
+      ],
+      "description": "Chat endpoints for interacting with the AI agent and managing conversations."
     }
   ],
   "variable": [

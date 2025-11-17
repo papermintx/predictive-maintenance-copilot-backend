@@ -1,12 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { AiAgentService } from './ai-agent.service';
+import { AiAgentService } from '../ai/services/agent.service';
 import {
   SendMessageDto,
   QueryConversationsDto,
   SendMessageResponse,
   ConversationResponse,
-  MessageResponse,
 } from './dto/chat.dto';
 
 @Injectable()
@@ -51,7 +50,6 @@ export class ChatService {
         data: {
           userId,
           title,
-          machineId: dto.machineId,
           totalMessages: 0,
         },
         include: {
@@ -79,13 +77,20 @@ export class ChatService {
 
     // Get AI response
     this.logger.log('Generating AI response...');
-    let aiResponseText: string;
+    let aiResponseData: { text: string; structured: any };
     try {
-      aiResponseText = await this.aiAgent.chat(dto.message, history);
+      aiResponseData = await this.aiAgent.chat(dto.message, history);
     } catch (error) {
       this.logger.error('AI Agent error:', error);
-      aiResponseText =
-        'I apologize, but I encountered an error processing your request. Please try again or rephrase your question.';
+      aiResponseData = {
+        text: 'I apologize, but I encountered an error processing your request. Please try again or rephrase your question.',
+        structured: {
+          summary: 'Error occurred',
+          overallRisk: 'MODERATE',
+          criticalAlerts: [],
+          recommendations: [],
+        },
+      };
     }
 
     // Save AI response
@@ -93,7 +98,7 @@ export class ChatService {
       data: {
         conversationId: conversation.id,
         role: 'assistant',
-        content: aiResponseText,
+        content: aiResponseData.text,
       },
     });
 
@@ -106,7 +111,9 @@ export class ChatService {
       },
     });
 
-    this.logger.log(`Message processed successfully for conversation ${conversation.id}`);
+    this.logger.log(
+      `Message processed successfully for conversation ${conversation.id}`,
+    );
 
     return {
       conversation: {
@@ -129,6 +136,7 @@ export class ChatService {
         content: aiMessage.content,
         createdAt: aiMessage.createdAt,
       },
+      structuredData: aiResponseData.structured,
     };
   }
 
