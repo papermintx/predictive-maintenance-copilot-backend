@@ -654,9 +654,89 @@
             "description": "Delete sensor reading (requires admin role)"
           },
           "response": []
+        },
+        {
+          "name": "Start Simulator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/simulator/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "simulator", "start"]
+            },
+            "description": "Start realtime sensor data simulator. Generates sensor readings every 5 seconds for all operational machines."
+          },
+          "response": []
+        },
+        {
+          "name": "Stop Simulator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/simulator/stop",
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "simulator", "stop"]
+            },
+            "description": "Stop sensor data simulator"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Simulator Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/simulator/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "simulator", "status"]
+            },
+            "description": "Check if sensor simulator is running"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Anomaly Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/simulator/anomaly/{{machineId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sensors", "simulator", "anomaly", "{{machineId}}"]
+            },
+            "description": "Generate anomaly sensor data for testing (high temperature, unusual speed)"
+          },
+          "response": []
         }
       ],
-      "description": "Sensor readings management endpoints"
+      "description": "Sensor readings management endpoints with realtime simulator"
     },
     {
       "name": "Health Check",
