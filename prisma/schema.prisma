@@ -43,8 +43,18 @@ enum UserRole {
   admin
   operator
   viewer
+  technician
 
   @@map("user_role")
+}
+
+enum MaintenanceStatus {
+  open
+  in_progress
+  closed
+  canceled
+
+  @@map("maintenance_status")
 }
 
 model User {
@@ -58,6 +68,7 @@ model User {
 
   // Relations
   chatMessages  ChatMessage[]
+  maintenanceTickets MaintenanceTicket[]
 
   @@index([email])
   @@map("users")
@@ -79,11 +90,31 @@ model Machine {
   // Relations
   sensorReadings      SensorData[]
   predictions         PredictionResult[]
+  maintenanceTickets  MaintenanceTicket[]
 
   @@index([productId])
   @@index([status])
   @@index([type])
   @@map("machines")
+}
+
+model MaintenanceTicket {
+  id          String            @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  machineId   String            @db.Uuid @map("machine_id")
+  requestedById String          @db.Uuid @map("requested_by_id")
+  description String
+  status      MaintenanceStatus @default(open)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  machine     Machine           @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  requestedBy User              @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+
+  @@index([machineId])
+  @@index([requestedById])
+  @@index([status])
+  @@map("maintenance_tickets")
 }
 
 model SensorData {

@@ -9,6 +9,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { MachineModule } from './machine/machine.module';
 import { SensorsModule } from './sensors/sensors.module';
+import { MaintenanceTicketModule } from './maintenance-ticket/maintenance-ticket.module';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
@@ -22,6 +23,7 @@ import { ChatModule } from './chat/chat.module';
     MachineModule,
     SensorsModule,
     ChatModule,
+    MaintenanceTicketModule,
   ],
   controllers: [AppController],
   providers: [

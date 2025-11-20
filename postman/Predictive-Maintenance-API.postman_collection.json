@@ -829,12 +829,159 @@
         }
       ],
       "description": "Chat endpoints for AI chatbot. Messages and responses are automatically persisted to database."
+    },
+    {
+      "name": "Maintenance Tickets",
+      "item": [
+        {
+          "name": "Create Maintenance Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('maintenanceTicketId', jsonData.id);",
+                  "    pm.test('Maintenance ticket created successfully', function () {",
+                  "        pm.expect(pm.response.code).to.equal(201);",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "        pm.expect(jsonData).to.have.property('machineId');",
+                  "        pm.expect(jsonData).to.have.property('status');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"machineId\": \"{{machineId}}\",\n  \"description\": \"Bearing temperature exceeding threshold. Requires immediate inspection and possible replacement.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/maintenance-tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["maintenance-tickets"]
+            },
+            "description": "Create a new maintenance ticket for a machine.\n\nRequest body:\n- machineId (string, required): UUID of the machine requiring maintenance\n- description (string, required): Detailed description of the maintenance issue\n\nResponse:\n- id (UUID): Ticket ID\n- machineId (UUID): Associated machine\n- requestedById (UUID): User who created the ticket\n- description (string): Issue description\n- status (string): Ticket status (open, in_progress, closed, canceled)\n- createdAt (ISO string): Creation timestamp\n- updatedAt (ISO string): Last update timestamp"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Maintenance Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/maintenance-tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["maintenance-tickets"]
+            },
+            "description": "Retrieve all maintenance tickets.\n\nResponse:\n- Array of maintenance ticket objects with fields:\n  - id (UUID): Ticket ID\n  - machineId (UUID): Associated machine\n  - requestedById (UUID): User who created the ticket\n  - description (string): Issue description\n  - status (string): Ticket status\n  - createdAt (ISO string): Creation timestamp\n  - updatedAt (ISO string): Last update timestamp"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Maintenance Ticket by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/maintenance-tickets/{{maintenanceTicketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["maintenance-tickets", "{{maintenanceTicketId}}"]
+            },
+            "description": "Get a specific maintenance ticket by ID.\n\nPath parameters:\n- id (UUID): Ticket ID\n\nResponse:\n- Single maintenance ticket object with all fields"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Maintenance Ticket Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/maintenance-tickets/{{maintenanceTicketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["maintenance-tickets", "{{maintenanceTicketId}}"]
+            },
+            "description": "Update the status of a maintenance ticket. Requires technician role.\n\nPath parameters:\n- id (UUID): Ticket ID\n\nRequest body:\n- status (string, optional): New ticket status (open, in_progress, closed, canceled)\n\nResponse:\n- Updated maintenance ticket object"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Maintenance Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/maintenance-tickets/{{maintenanceTicketId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["maintenance-tickets", "{{maintenanceTicketId}}", "cancel"]
+            },
+            "description": "Cancel a maintenance ticket.\n\nPath parameters:\n- id (UUID): Ticket ID\n\nResponse:\n- Updated maintenance ticket object with canceled status"
+          },
+          "response": []
+        }
+      ],
+      "description": "Maintenance ticket management endpoints. Technician role required for status updates."
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "maintenanceTicketId",
+      "value": "",
       "type": "string"
     }
   ]
