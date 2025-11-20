@@ -2,9 +2,7 @@ import {
   Controller,
   Post,
   Get,
-  Delete,
   Body,
-  Param,
   Query,
   UseGuards,
   HttpCode,
@@ -15,9 +13,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import {
   SendMessageDto,
-  QueryConversationsDto,
-  SendMessageResponse,
-  ConversationResponse,
+  ChatResponse,
+  QueryChatMessagesDto,
+  GetChatMessagesResponse,
 } from './dto/chat.dto';
 
 @Controller('chat')
@@ -30,32 +28,15 @@ export class ChatController {
   async sendMessage(
     @GetUser('id') userId: string,
     @Body() dto: SendMessageDto,
-  ): Promise<SendMessageResponse> {
+  ): Promise<ChatResponse> {
     return this.chatService.sendMessage(userId, dto);
   }
 
-  @Get('conversations')
-  async getConversations(
+  @Get()
+  async getChatMessages(
     @GetUser('id') userId: string,
-    @Query() query: QueryConversationsDto,
-  ) {
-    return this.chatService.getConversations(userId, query);
-  }
-
-  @Get('conversations/:id')
-  async getConversation(
-    @GetUser('id') userId: string,
-    @Param('id') conversationId: string,
-  ): Promise<ConversationResponse> {
-    return this.chatService.getConversation(userId, conversationId);
-  }
-
-  @Delete('conversations/:id')
-  @HttpCode(HttpStatus.OK)
-  async deleteConversation(
-    @GetUser('id') userId: string,
-    @Param('id') conversationId: string,
-  ) {
-    return this.chatService.deleteConversation(userId, conversationId);
+    @Query() query: QueryChatMessagesDto,
+  ): Promise<GetChatMessagesResponse> {
+    return this.chatService.getChatMessages(userId, query);
   }
 }

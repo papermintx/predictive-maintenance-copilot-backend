@@ -6,42 +6,46 @@ import { z } from 'zod';
 // ========================================
 export const sendMessageSchema = z.object({
   message: z.string().min(1, 'Message cannot be empty').max(1000),
-  conversationId: z.string().uuid().optional(),
 });
 
 export class SendMessageDto extends createZodDto(sendMessageSchema) {}
 
 // ========================================
-// Query Conversations DTO
+// Query Chat Messages DTO
 // ========================================
-export const queryConversationsSchema = z.object({
-  limit: z.coerce.number().int().positive().max(100).default(20).optional(),
+export const queryChatMessagesSchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).default(50).optional(),
   offset: z.coerce.number().int().min(0).default(0).optional(),
-  machineId: z.string().uuid().optional(),
 });
 
-export class QueryConversationsDto extends createZodDto(
-  queryConversationsSchema,
+export class QueryChatMessagesDto extends createZodDto(
+  queryChatMessagesSchema,
 ) {}
 
 // ========================================
-// Response DTOs (for type safety)
+// Response DTOs
 // ========================================
-export interface MessageResponse {
+export interface ChatMessageResponse {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   content: string;
   createdAt: Date;
 }
 
-export interface ConversationResponse {
-  id: string;
-  title: string;
-  machineId: string | null;
-  totalMessages: number;
-  lastMessageAt: Date | null;
-  createdAt: Date;
-  messages?: MessageResponse[];
+export interface ChatResponse {
+  text: string;
+  timestamp: Date;
+  structuredData?: StructuredAiResponse;
+}
+
+export interface GetChatMessagesResponse {
+  data: ChatMessageResponse[];
+  meta: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
 }
 
 // ========================================
@@ -74,11 +78,4 @@ export interface StructuredAiResponse {
   overallRisk: 'LOW' | 'MODERATE' | 'HIGH';
   criticalAlerts: string[];
   recommendations: string[];
-}
-
-export interface SendMessageResponse {
-  conversation: ConversationResponse;
-  message: MessageResponse;
-  aiResponse: MessageResponse;
-  structuredData?: StructuredAiResponse;
 }

@@ -22,7 +22,7 @@
     "prisma:push": "dotenv -e .env -- prisma db push",
     "prisma:generate": "dotenv -e .env -- prisma generate",
     "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
-    "prisma:seed": "dotenv -e .env -- ts-node prisma/seed/seed.ts",
+    "prisma:seed": "dotenv -e .env -- ts-node prisma/seed.ts",
     "prisma:verify": "dotenv -e .env -- ts-node prisma/seed/verify.ts"
   },
   "dependencies": {

@@ -58,13 +58,11 @@ async function main() {
 
   // Generate predictions for each machine
   for (const machine of machines) {
-    console.log(`📊 Generating predictions for ${machine.productId}...`);
+    console.log(`📊 Generating prediction for ${machine.productId}...`);
 
-    // Generate 30 predictions over the last 30 days
-    for (let i = 0; i < 30; i++) {
-      const daysAgo = 29 - i; // Most recent first
+    // Generate 1 prediction per machine
+    for (let i = 0; i < 1; i++) {
       const timestamp = new Date();
-      timestamp.setDate(timestamp.getDate() - daysAgo);
       timestamp.setHours(Math.floor(Math.random() * 24));
       timestamp.setMinutes(Math.floor(Math.random() * 60));
 
@@ -92,7 +90,7 @@ async function main() {
       }
 
       // Add some variance for recent predictions (trending)
-      const recencyFactor = (30 - daysAgo) / 30; // 0 to 1
+      const recencyFactor = 1; // Current prediction
       const trendVariance = (Math.random() - 0.5) * 0.15 * recencyFactor;
       const riskScore = Math.max(
         0.05,
@@ -112,7 +110,8 @@ async function main() {
             failureTypes[Math.floor(Math.random() * failureTypes.length)];
         } else if (riskScore > 0.6) {
           // Medium risk = tool wear or random
-          failureType = Math.random() > 0.5 ? 'Tool Wear Failure' : 'Random Failures';
+          failureType =
+            Math.random() > 0.5 ? 'Tool Wear Failure' : 'Random Failures';
         } else {
           // Lower risk = mostly random
           failureType = 'Random Failures';
@@ -151,7 +150,7 @@ async function main() {
       });
     }
 
-    console.log(`   ✅ Generated 30 predictions`);
+    console.log(`   ✅ Generated 1 prediction`);
   }
 
   console.log();
@@ -170,21 +169,17 @@ async function main() {
     const machinePredictions = predictions.filter(
       (p) => p.machineId === machine.id,
     );
-    const failureCount = machinePredictions.filter(
-      (p) => p.failurePredicted,
-    ).length;
-    const avgRisk =
-      machinePredictions.reduce((sum, p) => sum + p.riskScore, 0) /
-      machinePredictions.length;
-    const criticalCount = machinePredictions.filter(
-      (p) => p.riskScore >= 0.7,
-    ).length;
+    if (machinePredictions.length === 0) continue;
+
+    const prediction = machinePredictions[0]; // Get the single prediction
 
     console.log(`   ${machine.productId} (${machine.type}):`);
-    console.log(`   - Total Predictions: ${machinePredictions.length}`);
-    console.log(`   - Failures Predicted: ${failureCount}`);
-    console.log(`   - Critical Risk Count (≥0.7): ${criticalCount}`);
-    console.log(`   - Average Risk Score: ${avgRisk.toFixed(3)}`);
+    console.log(`   - Risk Score: ${prediction.riskScore}`);
+    console.log(`   - Failure Predicted: ${prediction.failurePredicted}`);
+    if (prediction.failureType) {
+      console.log(`   - Failure Type: ${prediction.failureType}`);
+    }
+    console.log(`   - Confidence: ${prediction.confidence}`);
     console.log();
   }
 

@@ -796,35 +796,7 @@
           "response": []
         },
         {
-          "name": "Send Message",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"message\": \"Hello AI!\",\n  \"conversationId\": \"{{conversationId}}\",\n  \"machineId\": \"{{machineId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["chat"]
-            },
-            "description": "Send a message to the AI agent and get a response."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Conversations",
+          "name": "Get Chat Messages",
           "request": {
             "method": "GET",
             "header": [
@@ -835,66 +807,28 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/chat/conversations?limit=20&offset=0",
+              "raw": "{{baseUrl}}/chat?limit=50&offset=0",
               "host": ["{{baseUrl}}"],
-              "path": ["chat", "conversations"],
+              "path": ["chat"],
               "query": [
                 {
                   "key": "limit",
-                  "value": "20"
+                  "value": "50",
+                  "description": "Number of messages to retrieve (max 100, default 50)"
                 },
                 {
                   "key": "offset",
-                  "value": "0"
+                  "value": "0",
+                  "description": "Number of messages to skip for pagination"
                 }
               ]
             },
-            "description": "Get a list of conversations for the authenticated user."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Conversation by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/chat/conversations/{{conversationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["chat", "conversations", "{{conversationId}}"]
-            },
-            "description": "Get details of a specific conversation by ID."
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Conversation",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/chat/conversations/{{conversationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["chat", "conversations", "{{conversationId}}"]
-            },
-            "description": "Delete a specific conversation by ID."
+            "description": "Retrieve all chat messages for the authenticated user with pagination.\n\nQuery parameters:\n- limit (number, optional): Max 100, default 50\n- offset (number, optional): For pagination, default 0\n\nResponse:\n- data (array): List of chat messages\n  - id (UUID): Message ID\n  - role (string): 'user' or 'assistant'\n  - content (string): Message content\n  - createdAt (ISO string): When message was created\n- meta (object): Pagination metadata\n  - total (number): Total messages count\n  - limit (number): Current limit\n  - offset (number): Current offset\n  - hasMore (boolean): Whether more messages exist"
           },
           "response": []
         }
       ],
-      "description": "Chat endpoints for interacting with the AI agent and managing conversations."
+      "description": "Chat endpoints for AI chatbot. Messages and responses are automatically persisted to database."
     }
   ],
   "variable": [
