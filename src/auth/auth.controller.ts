@@ -238,6 +238,25 @@ export class AuthController {
   }
 
   @Public()
+  @Post('update-password')
+  @HttpCode(HttpStatus.OK)
+  async updatePassword(
+    @Body() updatePasswordDto: { accessToken: string; newPassword: string },
+  ) {
+    return this.authService.updatePassword(
+      updatePasswordDto.accessToken,
+      updatePasswordDto.newPassword,
+    );
+  }
+
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(@Body() resendDto: ResendVerificationDto) {
+    return this.authService.resendVerificationEmail(resendDto.email);
+  }
+
+  @Public()
   @Post('verify-email/callback')
   @HttpCode(HttpStatus.OK)
   async verifyEmailCallback(@Body() callbackDto: VerifyEmailCallbackDto) {
@@ -248,9 +267,203 @@ export class AuthController {
   }
 
   @Public()
-  @Post('resend-verification')
+  @Get('reset-password-confirm')
   @HttpCode(HttpStatus.OK)
-  async resendVerification(@Body() resendDto: ResendVerificationDto) {
-    return this.authService.resendVerificationEmail(resendDto.email);
+  async resetPasswordConfirm(@Res() res: Response) {
+    // Handle reset password link from Supabase
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Reset Password</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          }
+          .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+          }
+          h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .form-group {
+            margin-bottom: 20px;
+          }
+          label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: bold;
+          }
+          input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+          }
+          input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+          }
+          .button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+          }
+          .button:hover {
+            background: #764ba2;
+          }
+          .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+          }
+          .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+          }
+          .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+          }
+          .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+          }
+          .info-text {
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🔐 Reset Password</h1>
+          
+          <form id="resetForm">
+            <div class="form-group">
+              <label for="newPassword">New Password</label>
+              <input 
+                type="password" 
+                id="newPassword" 
+                name="password"
+                placeholder="Enter your new password"
+                required
+                minlength="6"
+              />
+              <p class="info-text">Minimum 6 characters</p>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password</label>
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                name="confirmPassword"
+                placeholder="Confirm your new password"
+                required
+                minlength="6"
+              />
+            </div>
+
+            <button type="submit" class="button" id="submitBtn">Reset Password</button>
+          </form>
+
+          <div id="message" class="message"></div>
+        </div>
+
+        <script>
+          document.getElementById('resetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('message');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+              messageDiv.textContent = 'Passwords do not match!';
+              messageDiv.className = 'message error';
+              messageDiv.style.display = 'block';
+              return;
+            }
+
+            try {
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Resetting...';
+
+              // Get access token from URL hash
+              const hash = window.location.hash.substring(1);
+              const params = new URLSearchParams(hash);
+              const accessToken = params.get('access_token');
+
+              if (!accessToken) {
+                throw new Error('Invalid reset link. Please request a new password reset.');
+              }
+
+              // Call backend to update password
+              const response = await fetch('/auth/update-password', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  accessToken,
+                  newPassword
+                })
+              });
+
+              const result = await response.json();
+
+              if (response.ok && result.success) {
+                messageDiv.textContent = '✅ Password reset successfully! You can now log in with your new password.';
+                messageDiv.className = 'message success';
+                messageDiv.style.display = 'block';
+                document.getElementById('resetForm').style.display = 'none';
+              } else {
+                throw new Error(result.message || 'Failed to reset password');
+              }
+            } catch (error) {
+              console.error('❌ Error:', error);
+              messageDiv.textContent = error.message;
+              messageDiv.className = 'message error';
+              messageDiv.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Reset Password';
+            }
+          });
+        </script>
+      </body>
+      </html>
+    `);
   }
 }
