@@ -80,31 +80,6 @@ export class SensorsGateway
     this.server.to(`sensor:${data.machine_id}`).emit('sensor:update', data);
   }
 
-  @SubscribeMessage('subscribe:prediction')
-  async handleSubscribePrediction(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { machineId: string },
-  ) {
-    const { machineId } = data;
-    this.logger.log(
-      `Client ${client.id} subscribed to prediction:${machineId}`,
-    );
-
-    client.join(`prediction:${machineId}`);
-
-    // Subscribe ke prediction changes
-    this.supabaseRealtimeService.subscribePredictionChanges(
-      machineId,
-      (predictionData) => {
-        this.server
-          .to(`prediction:${machineId}`)
-          .emit('prediction:update', predictionData);
-      },
-    );
-
-    client.emit('subscribed', { machineId, type: 'prediction' });
-  }
-
   @SubscribeMessage('unsubscribe')
   handleUnsubscribe(
     @ConnectedSocket() client: Socket,

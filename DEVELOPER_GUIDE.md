@@ -832,4 +832,769 @@ Import collection dari `postman/Predictive-Maintenance-API.postman_collection.js
 
 ---
 
-**Happy Coding! 🚀**
+## 🔌 WebSocket Real-time API
+
+### Overview
+
+WebSocket API menyediakan real-time updates untuk sensor data dan predictions menggunakan Socket.IO. Data dikirim secara real-time setiap kali ada perubahan di database.
+
+### Connection Setup
+
+**WebSocket Namespace:** `/sensors`  
+**URL:** `ws://localhost:3000/sensors` (Development)
+
+---
+
+### Authentication
+
+WebSocket menggunakan JWT token yang sama dengan REST API untuk authentication.
+
+**Socket.IO Client Setup:**
+```javascript
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:3000/sensors', {
+  auth: {
+    token: accessToken  // Your JWT access token from sign in
+  }
+});
+```
+
+**Without Authentication:**
+- Connection akan di-reject
+- Error: `Authentication error`
+
+---
+
+### Connection Events
+
+#### 1. Connect
+Emitted ketika connection berhasil established.
+
+```javascript
+socket.on('connect', () => {
+  console.log('Connected to WebSocket');
+  console.log('Socket ID:', socket.id);
+});
+```
+
+#### 2. Disconnect
+Emitted ketika connection terputus.
+
+```javascript
+socket.on('disconnect', (reason) => {
+  console.log('Disconnected:', reason);
+  
+  // Reasons:
+  // - 'io server disconnect' = Server forced disconnect
+  // - 'io client disconnect' = Client manually disconnect
+  // - 'transport close' = Network issue
+  // - 'transport error' = Network error
+});
+```
+
+#### 3. Connect Error
+Emitted ketika connection gagal.
+
+```javascript
+socket.on('connect_error', (error) => {
+  console.error('Connection error:', error.message);
+  
+  // Common errors:
+  // - 'Authentication error' = Invalid/missing token
+  // - 'Session invalidated' = Token revoked after sign out
+});
+```
+
+#### 4. Error
+Emitted untuk error lainnya.
+
+```javascript
+socket.on('error', (error) => {
+  console.error('Socket error:', error);
+});
+```
+
+---
+
+### Subscription Events
+
+#### 1. Subscribe to Single Machine Sensor
+
+**Event:** `subscribe:sensor`
+
+**Emit:**
+```javascript
+socket.emit('subscribe:sensor', {
+  machineId: 'uuid-of-machine'
+});
+```
+
+**Response:** `subscribed`
+```javascript
+socket.on('subscribed', (data) => {
+  console.log('Subscribed:', data);
+  // Output: { machineId: "uuid-of-machine" }
+});
+```
+
+**Receive Updates:** `sensor:update`
+```javascript
+socket.on('sensor:update', (data) => {
+  console.log('Sensor update:', data);
+  
+  // Data format:
+  // {
+  //   udi: 123,
+  //   machine_id: "uuid-of-machine",
+  //   product_id: "L47181",
+  //   air_temp: 298.5,
+  //   process_temp: 308.2,
+  //   rotational_speed: 1450,
+  //   torque: 42.3,
+  //   tool_wear: 85,
+  //   timestamp: "2025-11-22T10:30:00.000Z"
+  // }
+  
+  updateSensorDisplay(data);
+});
+```
+
+---
+
+#### 2. Subscribe to All Sensors
+
+**Event:** `subscribe:all-sensors`
+
+**Emit:**
+```javascript
+socket.emit('subscribe:all-sensors');
+```
+
+**Response:** `subscribed`
+```javascript
+socket.on('subscribed', (data) => {
+  console.log('Subscribed to all sensors:', data);
+  // Output: { all: true }
+});
+```
+
+**Receive Updates:** `sensors:update`
+```javascript
+socket.on('sensors:update', (data) => {
+  console.log('Sensors update (all machines):', data);
+  
+  // Data format sama dengan sensor:update
+  // {
+  //   udi: 124,
+  //   machine_id: "uuid-of-any-machine",
+  //   product_id: "M14860",
+  //   air_temp: 299.1,
+  //   process_temp: 309.5,
+  //   rotational_speed: 1520,
+  //   torque: 45.2,
+  //   tool_wear: 92,
+  //   timestamp: "2025-11-22T10:30:05.000Z"
+  // }
+  
+  updateAllSensors(data);
+});
+```
+
+---
+
+#### 3. Unsubscribe
+
+**Event:** `unsubscribe`
+
+Unsubscribe dari semua room yang sudah di-subscribe.
+
+**Emit:**
+```javascript
+socket.emit('unsubscribe');
+```
+
+**Response:** No response, silent success
+
+---
+
+### Complete Frontend Example
+
+```javascript
+// ==========================================
+// WebSocket Manager Class
+// ==========================================
+
+class WebSocketManager {
+  constructor() {
+    this.socket = null;
+    this.accessToken = localStorage.getItem('accessToken');
+    this.subscribedMachines = new Set();
+  }
+
+  // Connect to WebSocket
+  connect() {
+    if (!this.accessToken) {
+      console.error('No access token found');
+      return;
+    }
+
+    this.socket = io('http://localhost:3000/sensors', {
+      auth: { token: this.accessToken }
+    });
+
+    this.setupEventHandlers();
+  }
+
+  // Setup all event handlers
+  setupEventHandlers() {
+    // Connection events
+    this.socket.on('connect', () => {
+      console.log('✅ WebSocket connected');
+      this.onConnect();
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('❌ WebSocket disconnected:', reason);
+      this.onDisconnect(reason);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('🚨 Connection error:', error.message);
+      this.onConnectError(error);
+    });
+
+    // Subscription confirmation
+    this.socket.on('subscribed', (data) => {
+      console.log('✅ Subscribed:', data);
+    });
+
+    // Data updates
+    this.socket.on('sensor:update', (data) => {
+      this.handleSensorUpdate(data);
+    });
+
+    this.socket.on('sensors:update', (data) => {
+      this.handleSensorsUpdate(data);
+    });
+  }
+
+  // Subscribe to single machine
+  subscribeToMachine(machineId) {
+    if (!this.socket || !this.socket.connected) {
+      console.error('Socket not connected');
+      return;
+    }
+
+    this.socket.emit('subscribe:sensor', { machineId });
+    this.subscribedMachines.add(machineId);
+  }
+
+  // Subscribe to all sensors
+  subscribeToAllSensors() {
+    if (!this.socket || !this.socket.connected) {
+      console.error('Socket not connected');
+      return;
+    }
+
+    this.socket.emit('subscribe:all-sensors');
+  }
+
+  // Unsubscribe from all
+  unsubscribe() {
+    if (!this.socket || !this.socket.connected) {
+      return;
+    }
+
+    this.socket.emit('unsubscribe');
+    this.subscribedMachines.clear();
+  }
+
+  // Disconnect
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      this.subscribedMachines.clear();
+    }
+  }
+
+  // Event handlers (customize these)
+  onConnect() {
+    // Update UI status
+    document.getElementById('wsStatus').textContent = 'Connected';
+    document.getElementById('wsStatus').className = 'status-connected';
+  }
+
+  onDisconnect(reason) {
+    // Update UI status
+    document.getElementById('wsStatus').textContent = 'Disconnected';
+    document.getElementById('wsStatus').className = 'status-disconnected';
+
+    // Auto-reconnect if not intentional disconnect
+    if (reason !== 'io client disconnect') {
+      console.log('Attempting to reconnect...');
+    }
+  }
+
+  onConnectError(error) {
+    // Show error to user
+    if (error.message === 'Authentication error') {
+      alert('Session expired. Please sign in again.');
+      window.location.href = '/login';
+    }
+  }
+
+  handleSensorUpdate(data) {
+    // Transform snake_case to camelCase for frontend
+    const sensorData = {
+      udi: data.udi,
+      machineId: data.machine_id,
+      productId: data.product_id,
+      airTemp: data.air_temp,
+      processTemp: data.process_temp,
+      rotationalSpeed: data.rotational_speed,
+      torque: data.torque,
+      toolWear: data.tool_wear,
+      timestamp: data.timestamp
+    };
+
+    // Update UI for specific machine
+    this.updateMachineSensorDisplay(sensorData);
+  }
+
+  handleSensorsUpdate(data) {
+    // Same transformation as handleSensorUpdate
+    const sensorData = {
+      udi: data.udi,
+      machineId: data.machine_id,
+      productId: data.product_id,
+      airTemp: data.air_temp,
+      processTemp: data.process_temp,
+      rotationalSpeed: data.rotational_speed,
+      torque: data.torque,
+      toolWear: data.tool_wear,
+      timestamp: data.timestamp
+    };
+
+    // Update UI for any machine
+    this.updateSensorReadings(sensorData);
+  }
+
+  updateMachineSensorDisplay(data) {
+    // Example: Update specific machine card
+    const card = document.getElementById(`machine-${data.machineId}`);
+    if (card) {
+      card.querySelector('.air-temp').textContent = data.airTemp.toFixed(1);
+      card.querySelector('.process-temp').textContent = data.processTemp.toFixed(1);
+      card.querySelector('.rpm').textContent = data.rotationalSpeed;
+      card.querySelector('.torque').textContent = data.torque.toFixed(1);
+      card.querySelector('.tool-wear').textContent = data.toolWear;
+      card.querySelector('.last-update').textContent = new Date(data.timestamp).toLocaleString();
+    }
+  }
+
+  updateSensorReadings(data) {
+    // Example: Add to sensor readings list
+    const grid = document.getElementById('sensorReadingsGrid');
+    const card = this.createSensorCard(data);
+    
+    // Add new card or update existing
+    const existingCard = grid.querySelector(`[data-machine-id="${data.machineId}"]`);
+    if (existingCard) {
+      existingCard.replaceWith(card);
+    } else {
+      grid.appendChild(card);
+    }
+  }
+
+  createSensorCard(data) {
+    const card = document.createElement('div');
+    card.className = 'sensor-card';
+    card.dataset.machineId = data.machineId;
+    
+    card.innerHTML = `
+      <div class="card-header">
+        <strong>📊 ${data.productId}</strong>
+        <span class="badge">UDI: ${data.udi}</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric">
+          <label>Air Temp</label>
+          <value>${data.airTemp.toFixed(1)} K</value>
+        </div>
+        <div class="metric">
+          <label>Process Temp</label>
+          <value>${data.processTemp.toFixed(1)} K</value>
+        </div>
+        <div class="metric">
+          <label>Speed</label>
+          <value>${data.rotationalSpeed} RPM</value>
+        </div>
+        <div class="metric">
+          <label>Torque</label>
+          <value>${data.torque.toFixed(1)} Nm</value>
+        </div>
+        <div class="metric">
+          <label>Tool Wear</label>
+          <value>${data.toolWear} min</value>
+        </div>
+      </div>
+      <div class="card-footer">
+        <small>Last update: ${new Date(data.timestamp).toLocaleString()}</small>
+      </div>
+    `;
+    
+    return card;
+  }
+
+  updateMachineStatus(machineId, prediction) {
+    const statusBadge = document.getElementById(`status-${machineId}`);
+    if (statusBadge && prediction.riskLevel === 'high') {
+      statusBadge.className = 'badge badge-danger';
+      statusBadge.textContent = 'High Risk';
+    }
+  }
+
+  showPredictionAlert(data) {
+    // Show notification
+    if (Notification.permission === 'granted') {
+      new Notification('⚠️ Predictive Maintenance Alert', {
+        body: `${data.failureType} detected on machine ${data.machineId}`,
+        icon: '/alert-icon.png'
+      });
+    }
+
+    // Show in-app alert
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger';
+    alert.innerHTML = `
+      <strong>⚠️ ${data.failureType}</strong><br>
+      Machine: ${data.machineId}<br>
+      Risk Level: ${data.riskLevel}<br>
+      Confidence: ${(data.confidence * 100).toFixed(1)}%
+    `;
+    document.getElementById('alerts-container').prepend(alert);
+  }
+}
+
+// ==========================================
+// Usage Example
+// ==========================================
+
+// Initialize WebSocket manager
+const wsManager = new WebSocketManager();
+
+// Connect on page load (after login)
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    wsManager.connect();
+    
+    // Subscribe to all sensors for dashboard
+    wsManager.subscribeToAllSensors();
+  }
+});
+
+// Subscribe to specific machine when viewing details
+function viewMachineDetails(machineId) {
+  // Navigate to detail page
+  window.location.href = `/machines/${machineId}`;
+  
+  // Subscribe to this machine
+  wsManager.subscribeToMachine(machineId);
+  wsManager.subscribeToPrediction(machineId);
+}
+
+// Cleanup on logout
+function logout() {
+  wsManager.disconnect();
+  localStorage.removeItem('accessToken');
+  window.location.href = '/login';
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  wsManager.disconnect();
+});
+```
+
+---
+
+### React Example
+
+```typescript
+// hooks/useWebSocket.ts
+import { useEffect, useRef, useState } from 'react';
+import io, { Socket } from 'socket.io-client';
+
+interface SensorData {
+  udi: number;
+  machineId: string;
+  productId: string;
+  airTemp: number;
+  processTemp: number;
+  rotationalSpeed: number;
+  torque: number;
+  toolWear: number;
+  timestamp: string;
+}
+
+interface PredictionData {
+  id: number;
+  machineId: string;
+  predictedFailure: boolean;
+  failureType: string;
+  confidence: number;
+  riskLevel: string;
+  predictedAt: string;
+}
+
+export function useWebSocket() {
+  const [isConnected, setIsConnected] = useState(false);
+  const [latestSensor, setLatestSensor] = useState<SensorData | null>(null);
+  const [latestPrediction, setLatestPrediction] = useState<PredictionData | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    // Connect
+    socketRef.current = io('http://localhost:3000/sensors', {
+      auth: { token }
+    });
+
+    const socket = socketRef.current;
+
+    // Event handlers
+    socket.on('connect', () => {
+      console.log('WebSocket connected');
+      setIsConnected(true);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+      setIsConnected(false);
+    });
+
+    socket.on('sensor:update', (data: any) => {
+      setLatestSensor({
+        udi: data.udi,
+        machineId: data.machine_id,
+        productId: data.product_id,
+        airTemp: data.air_temp,
+        processTemp: data.process_temp,
+        rotationalSpeed: data.rotational_speed,
+        torque: data.torque,
+        toolWear: data.tool_wear,
+        timestamp: data.timestamp
+      });
+    });
+
+    socket.on('sensors:update', (data: any) => {
+      setLatestSensor({
+        udi: data.udi,
+        machineId: data.machine_id,
+        productId: data.product_id,
+        airTemp: data.air_temp,
+        processTemp: data.process_temp,
+        rotationalSpeed: data.rotational_speed,
+        torque: data.torque,
+        toolWear: data.tool_wear,
+        timestamp: data.timestamp
+      });
+    });
+
+    // Cleanup
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const subscribeToMachine = (machineId: string) => {
+    socketRef.current?.emit('subscribe:sensor', { machineId });
+  };
+
+  const subscribeToAllSensors = () => {
+    socketRef.current?.emit('subscribe:all-sensors');
+  };
+
+  const unsubscribe = () => {
+    socketRef.current?.emit('unsubscribe');
+  };
+
+  return {
+    isConnected,
+    latestSensor,
+    subscribeToMachine,
+    subscribeToAllSensors,
+    unsubscribe
+  };
+}
+}
+
+// Usage in component
+function Dashboard() {
+  const { 
+    isConnected, 
+    latestSensor, 
+    subscribeToAllSensors 
+  } = useWebSocket();
+
+  useEffect(() => {
+    if (isConnected) {
+      subscribeToAllSensors();
+    }
+  }, [isConnected]);
+
+  return (
+    <div>
+      <div>Status: {isConnected ? '🟢 Connected' : '🔴 Disconnected'}</div>
+      {latestSensor && (
+        <div>
+          <h3>Latest Sensor Reading</h3>
+          <p>Machine: {latestSensor.productId}</p>
+          <p>Air Temp: {latestSensor.airTemp.toFixed(1)} K</p>
+          <p>Process Temp: {latestSensor.processTemp.toFixed(1)} K</p>
+          <p>Speed: {latestSensor.rotationalSpeed} RPM</p>
+          <p>Torque: {latestSensor.torque.toFixed(1)} Nm</p>
+          <p>Tool Wear: {latestSensor.toolWear} min</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+### Sensor Simulator API
+
+**Start Simulator:**
+```javascript
+POST /sensors/simulator/start
+Headers: { Authorization: "Bearer <token>" }
+```
+
+**Stop Simulator:**
+```javascript
+POST /sensors/simulator/stop
+Headers: { Authorization: "Bearer <token>" }
+```
+
+**Check Status:**
+```javascript
+GET /sensors/simulator/status
+Headers: { Authorization: "Bearer <token>" }
+```
+
+**Generate Anomaly (Testing):**
+```javascript
+POST /sensors/simulator/anomaly/:machineId
+Headers: { Authorization: "Bearer <token>" }
+```
+
+> 💡 **Note:** Simulator menghasilkan sensor data setiap 5 detik dan broadcast via WebSocket secara real-time.
+
+---
+
+### Data Format Reference
+
+#### Sensor Data (from WebSocket)
+```typescript
+{
+  udi: number;              // Unique Data Identifier
+  machine_id: string;       // Machine UUID (snake_case from DB)
+  product_id: string;       // Product ID (e.g., "L47181")
+  air_temp: number;         // Air temperature in Kelvin
+  process_temp: number;     // Process temperature in Kelvin
+  rotational_speed: number; // RPM
+  torque: number;           // Torque in Nm
+  tool_wear: number;        // Tool wear in minutes
+  timestamp: string;        // ISO 8601 timestamp
+}
+```
+
+#### Prediction Data (from WebSocket)
+```typescript
+{
+  id: number;
+  machineId: string;
+  predictedFailure: boolean;
+  failureType: string;      // e.g., "Heat Dissipation Failure"
+  confidence: number;       // 0.0 - 1.0
+  riskLevel: string;        // "low" | "medium" | "high" | "critical"
+  predictedAt: string;      // ISO 8601 timestamp
+}
+```
+
+---
+
+### Best Practices
+
+#### 1. Connection Management
+- ✅ Connect WebSocket after successful login
+- ✅ Disconnect on logout or page unload
+- ✅ Handle reconnection automatically
+- ❌ Don't create multiple connections
+
+#### 2. Subscription Management
+- ✅ Subscribe only to data you need
+- ✅ Unsubscribe when leaving page/component
+- ✅ Use `subscribe:all-sensors` for dashboard
+- ✅ Use `subscribe:sensor` for detail pages
+
+#### 3. Error Handling
+- ✅ Handle `connect_error` for auth issues
+- ✅ Show connection status to user
+- ✅ Implement retry logic with exponential backoff
+- ✅ Clear tokens and redirect on auth errors
+
+#### 4. Performance
+- ✅ Use efficient data structures (Map, Set)
+- ✅ Debounce rapid UI updates
+- ✅ Limit number of subscriptions
+- ❌ Don't subscribe to all machines individually
+
+#### 5. Security
+- ✅ Always pass valid JWT token
+- ✅ Validate token expiry before connecting
+- ✅ Clear sensitive data on disconnect
+- ❌ Don't expose tokens in console logs
+
+---
+
+### Troubleshooting
+
+#### Connection Fails
+**Problem:** `connect_error: Authentication error`
+**Solution:** 
+- Check if token is valid
+- Ensure token is passed in `auth.token`
+- Try refreshing token or sign in again
+
+#### No Data Received
+**Problem:** Connected but no `sensor:update` events
+**Solution:**
+- Ensure you called `subscribe:sensor` or `subscribe:all-sensors`
+- Check if simulator is running (`POST /sensors/simulator/start`)
+- Check server logs for Supabase Realtime issues
+
+#### Multiple Updates
+**Problem:** Receiving duplicate events
+**Solution:**
+- Check if you're subscribing multiple times
+- Call `unsubscribe` before re-subscribing
+- Use `subscribeToAllSensors()` only once
+
+#### Memory Leaks
+**Problem:** Browser performance degrades over time
+**Solution:**
+- Always disconnect socket on unmount (React) or page unload
+- Remove event listeners properly
+- Clear data structures (Maps, Sets) on cleanup
+
+---
+
+**Happy Real-time Coding! 🚀**

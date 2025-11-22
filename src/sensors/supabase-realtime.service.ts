@@ -48,12 +48,17 @@ export class SupabaseRealtimeService implements OnModuleInit {
           filter: `machine_id=eq.${machineId}`,
         },
         (payload) => {
-          this.logger.debug(`📡 Supabase Realtime - Machine ${machineId}:`, payload);
+          this.logger.debug(
+            `📡 Supabase Realtime - Machine ${machineId}:`,
+            payload,
+          );
           callback(payload.new || payload.old);
         },
       )
       .subscribe((status) => {
-        this.logger.log(`📡 Supabase channel '${channelKey}' status: ${status}`);
+        this.logger.log(
+          `📡 Supabase channel '${channelKey}' status: ${status}`,
+        );
       });
 
     this.subscriptions.set(channelKey, channel);
@@ -76,40 +81,16 @@ export class SupabaseRealtimeService implements OnModuleInit {
           table: 'sensor_data',
         },
         (payload) => {
-          this.logger.debug(`📡 Supabase Realtime - All sensors event:`, payload);
+          this.logger.debug(
+            `📡 Supabase Realtime - All sensors event:`,
+            payload,
+          );
           callback(payload.new || payload.old);
         },
       )
       .subscribe((status) => {
         this.logger.log(`📡 Supabase channel 'sensors:all' status: ${status}`);
       });
-
-    this.subscriptions.set(channelKey, channel);
-  }
-
-  subscribePredictionChanges(machineId: string, callback: (data: any) => void) {
-    const channelKey = `prediction:${machineId}`;
-
-    if (this.subscriptions.has(channelKey)) {
-      return;
-    }
-
-    const channel = this.supabase
-      .channel(channelKey)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'prediction_results',
-          filter: `machine_id=eq.${machineId}`,
-        },
-        (payload) => {
-          this.logger.log(`Prediction update for machine ${machineId}`);
-          callback(payload.new || payload.old);
-        },
-      )
-      .subscribe();
 
     this.subscriptions.set(channelKey, channel);
   }

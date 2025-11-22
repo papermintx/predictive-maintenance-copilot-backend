@@ -264,6 +264,15 @@
                         <button class="btn-primary" onclick="subscribeAll()">Subscribe All</button>
                         <button class="btn-danger" onclick="logout()">Logout</button>
                     </div>
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e9ecef;">
+                        <div style="margin-bottom: 10px; font-weight: 600; color: #555;">
+                            🎮 Sensor Simulator Controls <span id="simulatorStatus" style="font-size: 12px; color: #6c757d;">(Unknown)</span>
+                        </div>
+                        <button class="btn-success" onclick="startSimulator()">▶️ Start Simulator</button>
+                        <button class="btn-danger" onclick="stopSimulator()">⏹️ Stop Simulator</button>
+                        <button class="btn-primary" onclick="checkSimulatorStatus()">🔄 Check Status</button>
+                    </div>
                 </div>
             </div>
 
@@ -326,6 +335,7 @@
                 document.getElementById('mainSection').classList.remove('hidden');
                 
                 await fetchMachines();
+                await checkSimulatorStatus(); // Check simulator status after login
             } catch (error) {
                 showStatus('loginStatus', 'Login failed: ' + error.message, 'error');
             }
@@ -373,7 +383,7 @@
                 `;
             }).join('');
             
-            // Render sensor readings separately
+            // Render sensor readings
             renderSensorReadings();
         }
 
@@ -438,7 +448,7 @@
             }
             
             if (subscribedMachines.has(machineId)) {
-                socket.emit('unsubscribe', { machineId, type: 'sensor' });
+                socket.emit('unsubscribe', { machineId });
                 subscribedMachines.delete(machineId);
                 log(`Unsubscribed from machine ${machineId}`);
             } else {
@@ -576,12 +586,100 @@
             log('👋 Logged out');
         }
 
+        // Simulator Control Functions
+        async function startSimulator() {
+            if (!accessToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/sensors/simulator/start`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to start simulator');
+                
+                const data = await response.json();
+                log(`✅ Simulator started: ${data.message}`, data);
+                updateSimulatorStatus('Running ✅');
+                
+                // Auto check status after 2 seconds
+                setTimeout(checkSimulatorStatus, 2000);
+            } catch (error) {
+                log(`❌ Failed to start simulator: ${error.message}`, null);
+                alert('Failed to start simulator: ' + error.message);
+            }
+        }
+        
+        async function stopSimulator() {
+            if (!accessToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/sensors/simulator/stop`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to stop simulator');
+                
+                const data = await response.json();
+                log(`⏹️ Simulator stopped: ${data.message}`, data);
+                updateSimulatorStatus('Stopped ⏹️');
+            } catch (error) {
+                log(`❌ Failed to stop simulator: ${error.message}`, null);
+                alert('Failed to stop simulator: ' + error.message);
+            }
+        }
+        
+        async function checkSimulatorStatus() {
+            if (!accessToken) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/sensors/simulator/status`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to check status');
+                
+                const data = await response.json();
+                const status = data.isRunning ? 'Running ✅' : 'Stopped ⏹️';
+                updateSimulatorStatus(status);
+                log(`📊 Simulator status: ${status}`, data);
+            } catch (error) {
+                log(`❌ Failed to check simulator status: ${error.message}`, null);
+                updateSimulatorStatus('Error ❌');
+            }
+        }
+        
+        function updateSimulatorStatus(status) {
+            const statusElement = document.getElementById('simulatorStatus');
+            if (statusElement) {
+                statusElement.textContent = `(${status})`;
+                statusElement.style.color = status.includes('✅') ? '#28a745' : 
+                                           status.includes('⏹️') ? '#dc3545' : '#6c757d';
+            }
+        }
+
         // Auto-refresh machines every 30 seconds
         setInterval(() => {
             if (accessToken && !document.getElementById('mainSection').classList.contains('hidden')) {
                 fetchMachines();
             }
         }, 30000);
+        
+        // Auto-check simulator status every 10 seconds
+        setInterval(() => {
+            if (accessToken && !document.getElementById('mainSection').classList.contains('hidden')) {
+                checkSimulatorStatus();
+            }
+        }, 10000);
     </script>
 </body>
 </html>
