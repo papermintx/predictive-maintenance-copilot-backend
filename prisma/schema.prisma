@@ -35,7 +35,6 @@ enum MachineStatus {
 enum MessageRole {
   user
   assistant
-  system
 
   @@map("message_role")
 }
@@ -44,8 +43,18 @@ enum UserRole {
   admin
   operator
   viewer
+  technician
 
   @@map("user_role")
+}
+
+enum MaintenanceStatus {
+  open
+  in_progress
+  closed
+  canceled
+
+  @@map("maintenance_status")
 }
 
 model User {
@@ -56,9 +65,10 @@ model User {
   isActive      Boolean        @default(true) @map("is_active")
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
-  
+
   // Relations
-  conversations Conversation[]
+  chatMessages  ChatMessage[]
+  maintenanceTickets MaintenanceTicket[]
 
   @@index([email])
   @@map("users")
@@ -80,12 +90,31 @@ model Machine {
   // Relations
   sensorReadings      SensorData[]
   predictions         PredictionResult[]
-  conversations       Conversation[]
+  maintenanceTickets  MaintenanceTicket[]
 
   @@index([productId])
   @@index([status])
   @@index([type])
   @@map("machines")
+}
+
+model MaintenanceTicket {
+  id          String            @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  machineId   String            @db.Uuid @map("machine_id")
+  requestedById String          @db.Uuid @map("requested_by_id")
+  description String
+  status      MaintenanceStatus @default(open)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  machine     Machine           @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  requestedBy User              @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+
+  @@index([machineId])
+  @@index([requestedById])
+  @@index([status])
+  @@map("maintenance_tickets")
 }
 
 model SensorData {
@@ -130,38 +159,18 @@ model PredictionResult {
   @@map("prediction_results")
 }
 
-model Conversation {
-  id             String    @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
-  userId         String    @db.Uuid @map("user_id")
-  title          String
-  machineId      String?   @db.Uuid @map("machine_id")
-  totalMessages  Int       @default(0) @map("total_messages")
-  lastMessageAt  DateTime? @map("last_message_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  
-  // Relations
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  machine        Machine?  @relation(fields: [machineId], references: [id], onDelete: SetNull)
-  messages       Message[]
-
-  @@index([userId])
-  @@index([machineId])
-  @@index([lastMessageAt])
-  @@map("chat_conversations")
-}
-
-model Message {
+model ChatMessage {
   id             String       @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
-  conversationId String       @db.Uuid @map("conversation_id")
+  userId         String       @db.Uuid @map("user_id")
   role           MessageRole
   content        String       @db.Text
   createdAt      DateTime     @default(now()) @map("created_at")
   
   // Relations
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([conversationId, createdAt])
+  @@index([userId, createdAt])
+  @@index([createdAt])
   @@map("chat_messages")
 }
 

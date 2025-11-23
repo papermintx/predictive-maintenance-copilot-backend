@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance - Real-time Monitoring</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <style>
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+        .slide-up { animation: slide-up 0.5s ease-out; }
+        .glow-effect { animation: glow 2s ease-in-out infinite; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .gradient-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+        
+        .machine-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .machine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .machine-card:hover::before {
+            left: 100%;
+        }
+        .machine-card:hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+        
+        .log-container {
+            background: #1e293b;
+            font-family: 'Courier New', monospace;
+        }
+        .log-entry {
+            border-left: 3px solid #3b82f6;
+            transition: background 0.3s;
+        }
+        .log-entry:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Global Loading Overlay -->
+    <div id="globalLoading" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mb-4"></div>
+            <p class="loading-message text-lg font-semibold text-gray-800">Loading...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6 slide-up">
+            <div class="gradient-bg text-white p-8 text-center">
+                <div class="flex items-center justify-center mb-3">
+                    <i class="bi bi-broadcast text-5xl mr-4"></i>
+                    <h1 class="text-4xl font-bold">Real-time Monitoring</h1>
+                </div>
+                <p class="text-lg opacity-90">Predictive Maintenance System</p>
+            </div>
+        </div>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md mx-auto slide-up">
+            <div class="p-8">
+                <div class="flex items-center mb-6">
+                    <i class="bi bi-shield-lock text-3xl text-indigo-600 mr-3"></i>
+                    <h2 class="text-2xl font-bold text-gray-800">Login</h2>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="bi bi-envelope mr-2"></i>Email
+                    </label>
+                    <input type="email" id="loginEmail" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition duration-200"
+                           placeholder="admin@example.com" value="test@example.com">
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="bi bi-key mr-2"></i>Password
+                    </label>
+                    <input type="password" id="loginPassword" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition duration-200"
+                           placeholder="Password" value="password123">
+                </div>
+                
+                <button onclick="login()" 
+                        class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition duration-200 transform hover:scale-105">
+                    <i class="bi bi-box-arrow-in-right mr-2"></i>Login
+                </button>
+                
+                <div id="loginStatus" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Main Section -->
+        <div id="mainSection" class="hidden space-y-6">
+            <!-- Control Panel -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 slide-up">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- WebSocket Controls -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <i class="bi bi-broadcast-pin mr-2"></i>WebSocket
+                            </h3>
+                            <div id="connectionStatus" class="px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-700">
+                                <span class="pulse-dot inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                                Disconnected
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="connectWebSocket()" 
+                                    class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-plug mr-2"></i>Connect
+                            </button>
+                            <button onclick="disconnectWebSocket()" 
+                                    class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-x-circle mr-2"></i>Disconnect
+                            </button>
+                            <button onclick="subscribeAll()" 
+                                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-broadcast mr-2"></i>Subscribe All
+                            </button>
+                            <button onclick="logout()" 
+                                    class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-box-arrow-right mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Simulator Controls -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <i class="bi bi-cpu mr-2"></i>Simulator Controls
+                            </h3>
+                        </div>
+                        
+                        <!-- Normal Simulator -->
+                        <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-gray-700">
+                                    <i class="bi bi-gear mr-1"></i>Normal Simulator
+                                </span>
+                                <div id="simulatorNormalStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                    <i class="bi bi-question-circle mr-1"></i>Unknown
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="startNormalSimulator()" 
+                                        class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-play-fill mr-1"></i>Start
+                                </button>
+                                <button onclick="stopSimulator()" 
+                                        class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-stop-fill mr-1"></i>Stop
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Anomaly Simulator -->
+                        <div class="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-red-700">
+                                    <i class="bi bi-exclamation-triangle mr-1"></i>Anomaly Simulator
+                                </span>
+                                <div id="simulatorAnomalyStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                    <i class="bi bi-question-circle mr-1"></i>Stopped
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="startAnomalySimulator()" 
+                                        class="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-play-fill mr-1"></i>Start
+                                </button>
+                                <button onclick="stopSimulator()" 
+                                        class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-stop-fill mr-1"></i>Stop
+                                </button>
+                            </div>
+                            <p class="text-xs text-red-600 mt-2">
+                                <i class="bi bi-info-circle mr-1"></i>Only one simulator can run at a time
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Machines Grid with Embedded Sensor Data -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 slide-up">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="bi bi-gear-wide-connected mr-2"></i>Machines
+                        <span id="machineCount" class="text-indigo-600">(0)</span>
+                    </h3>
+                    <div class="text-sm text-gray-600">
+                        <i class="bi bi-info-circle mr-1"></i>Click to subscribe/unsubscribe
+                    </div>
+                </div>
+                <div id="machinesGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="bi bi-hourglass-split text-4xl mb-2"></i>
+                        <p>Loading machines...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 slide-up">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="bi bi-terminal mr-2"></i>Real-time Logs
+                </h3>
+                <div id="logs" class="log-container rounded-lg p-4 max-h-96 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="/app.js"></script>
+</body>
+</html>

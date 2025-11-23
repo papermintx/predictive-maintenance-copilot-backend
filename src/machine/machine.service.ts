@@ -89,7 +89,7 @@ export class MachineService {
             _count: {
               select: {
                 sensorReadings: true,
-                // predictions: true, // TODO: Uncomment after prisma:generate
+                predictions: true,
               },
             },
           }
@@ -115,7 +115,7 @@ export class MachineService {
         _count: {
           select: {
             sensorReadings: true,
-            // predictions: true, // TODO: Uncomment after prisma:generate
+            predictions: true,
           },
         },
       },
@@ -176,26 +176,26 @@ export class MachineService {
   async getStats(id: string) {
     const machine = await this.findOne(id);
 
-    const [sensorReadingsCount] = await Promise.all([
+    const [
+      sensorReadingsCount,
+      predictionsCount,
+      latestPrediction,
+      criticalPredictions,
+    ] = await Promise.all([
       this.prisma.sensorData.count({ where: { machineId: id } }),
-      // TODO: Uncomment after running `npm run prisma:generate`
-      // this.prisma.predictionResult.count({ where: { machineId: id } }),
-      // this.prisma.predictionResult.findFirst({
-      //   where: { machineId: id },
-      //   orderBy: { timestamp: 'desc' },
-      // }),
-      // this.prisma.predictionResult.count({
-      //   where: {
-      //     machineId: id,
-      //     failurePredicted: true,
-      //     riskScore: { gte: 0.7 },
-      //   },
-      // }),
+      this.prisma.predictionResult.count({ where: { machineId: id } }),
+      this.prisma.predictionResult.findFirst({
+        where: { machineId: id },
+        orderBy: { timestamp: 'desc' },
+      }),
+      this.prisma.predictionResult.count({
+        where: {
+          machineId: id,
+          failurePredicted: true,
+          riskScore: { gte: 0.7 },
+        },
+      }),
     ]);
-
-    const predictionsCount = 0;
-    const latestPrediction = null;
-    const criticalPredictions = 0;
 
     return {
       machine,

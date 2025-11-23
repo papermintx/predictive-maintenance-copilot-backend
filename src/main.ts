@@ -29,5 +29,7 @@ async function bootstrap() {
   logger.log(`   POST /auth/reset-password`);
   logger.log(`   POST /auth/signout`);
   logger.log(`   GET  /auth/me`);
+  logger.log(`🔌 WebSocket Test Page: http://localhost:${port}/index.html`);
+  logger.log(`📡 WebSocket namespace: ws://localhost:${port}/sensors`);
 }
 bootstrap();

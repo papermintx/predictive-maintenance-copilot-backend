@@ -12,6 +12,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { SensorsService } from './sensors.service';
+import { SensorSimulatorService } from './sensor-simulator.service';
 import {
   CreateSensorReadingDto,
   QuerySensorReadingsDto,
@@ -25,7 +26,10 @@ import { UserRole } from '@prisma/client';
 @Controller('sensors')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SensorsController {
-  constructor(private readonly sensorsService: SensorsService) {}
+  constructor(
+    private readonly sensorsService: SensorsService,
+    private readonly sensorSimulatorService: SensorSimulatorService,
+  ) {}
 
   @Post()
   @Roles(UserRole.admin, UserRole.operator)
@@ -64,5 +68,41 @@ export class SensorsController {
   @HttpCode(HttpStatus.OK)
   remove(@Param('udi', ParseIntPipe) udi: number) {
     return this.sensorsService.remove(udi);
+  }
+
+  // Simulator endpoints
+  @Post('simulator/start')
+  @Roles(UserRole.admin)
+  @HttpCode(HttpStatus.OK)
+  startSimulator() {
+    this.sensorSimulatorService.startSimulation();
+    return {
+      message: 'Sensor simulator started',
+      status: 'running',
+    };
+  }
+
+  @Post('simulator/stop')
+  @Roles(UserRole.admin)
+  @HttpCode(HttpStatus.OK)
+  stopSimulator() {
+    this.sensorSimulatorService.stopSimulation();
+    return {
+      message: 'Sensor simulator stopped',
+      status: 'stopped',
+    };
+  }
+
+  @Get('simulator/status')
+  @Roles(UserRole.admin, UserRole.operator)
+  getSimulatorStatus() {
+    return this.sensorSimulatorService.getStatus();
+  }
+
+  @Post('simulator/anomaly/:machineId')
+  @Roles(UserRole.admin)
+  @HttpCode(HttpStatus.CREATED)
+  generateAnomaly(@Param('machineId') machineId: string) {
+    return this.sensorSimulatorService.generateAnomalySensorData(machineId);
   }
 }
