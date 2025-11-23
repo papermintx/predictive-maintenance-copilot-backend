@@ -20,12 +20,56 @@ export class MaintenanceTicketService {
   }
 
   async findAll() {
-    return this.prisma.maintenanceTicket.findMany();
+    return this.prisma.maintenanceTicket.findMany({
+      include: {
+        machine: {
+          select: {
+            id: true,
+            productId: true,
+            name: true,
+            location: true,
+            status: true,
+            type: true,
+          },
+        },
+        requestedBy: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async findOne(id: string) {
     return this.prisma.maintenanceTicket.findUnique({
       where: { id },
+      include: {
+        machine: {
+          select: {
+            id: true,
+            productId: true,
+            name: true,
+            location: true,
+            status: true,
+            type: true,
+          },
+        },
+        requestedBy: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            role: true,
+          },
+        },
+      },
     });
   }
 

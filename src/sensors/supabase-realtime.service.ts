@@ -25,8 +25,6 @@ export class SupabaseRealtimeService implements OnModuleInit {
         },
       },
     });
-
-    this.logger.log('Supabase Realtime initialized');
   }
 
   subscribeSensorChanges(machineId: string, callback: (data: any) => void) {
@@ -55,11 +53,7 @@ export class SupabaseRealtimeService implements OnModuleInit {
           callback(payload.new || payload.old);
         },
       )
-      .subscribe((status) => {
-        this.logger.log(
-          `📡 Supabase channel '${channelKey}' status: ${status}`,
-        );
-      });
+      .subscribe();
 
     this.subscriptions.set(channelKey, channel);
   }
@@ -88,9 +82,7 @@ export class SupabaseRealtimeService implements OnModuleInit {
           callback(payload.new || payload.old);
         },
       )
-      .subscribe((status) => {
-        this.logger.log(`📡 Supabase channel 'sensors:all' status: ${status}`);
-      });
+      .subscribe();
 
     this.subscriptions.set(channelKey, channel);
   }
@@ -100,14 +92,12 @@ export class SupabaseRealtimeService implements OnModuleInit {
     if (channel) {
       await this.supabase.removeChannel(channel);
       this.subscriptions.delete(channelKey);
-      this.logger.log(`Unsubscribed from ${channelKey}`);
     }
   }
 
   async unsubscribeAll() {
-    for (const [key, channel] of this.subscriptions.entries()) {
+    for (const [_key, channel] of this.subscriptions.entries()) {
       await this.supabase.removeChannel(channel);
-      this.logger.log(`Unsubscribed from ${key}`);
     }
     this.subscriptions.clear();
   }

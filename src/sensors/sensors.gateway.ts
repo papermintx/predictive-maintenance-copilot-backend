@@ -28,12 +28,12 @@ export class SensorsGateway
 
   constructor(private supabaseRealtimeService: SupabaseRealtimeService) {}
 
-  handleConnection(@ConnectedSocket() client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
+  handleConnection(@ConnectedSocket() _client: Socket) {
+    // Client connected
   }
 
-  handleDisconnect(@ConnectedSocket() client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+  handleDisconnect(@ConnectedSocket() _client: Socket) {
+    // Client disconnected
   }
 
   @SubscribeMessage('subscribe:sensor')
@@ -42,7 +42,6 @@ export class SensorsGateway
     @MessageBody() data: { machineId: string },
   ) {
     const { machineId } = data;
-    this.logger.log(`Client ${client.id} subscribed to sensor:${machineId}`);
 
     // Join room untuk machine tertentu
     client.join(`sensor:${machineId}`);
@@ -60,13 +59,10 @@ export class SensorsGateway
 
   @SubscribeMessage('subscribe:all-sensors')
   async handleSubscribeAllSensors(@ConnectedSocket() client: Socket) {
-    this.logger.log(`Client ${client.id} subscribed to all sensors`);
-
     client.join('sensors:all');
 
     // Subscribe ke semua sensor changes
     this.supabaseRealtimeService.subscribeAllSensors((sensorData) => {
-      this.logger.debug(`📤 Broadcasting sensor update to all:`, sensorData);
       this.server.to('sensors:all').emit('sensors:update', sensorData);
     });
 
@@ -75,7 +71,6 @@ export class SensorsGateway
 
   // Direct broadcast method for simulator
   broadcastSensorUpdate(data: any) {
-    this.logger.debug(`📤 Direct broadcast:`, data);
     this.server.to('sensors:all').emit('sensors:update', data);
     this.server.to(`sensor:${data.machine_id}`).emit('sensor:update', data);
   }
@@ -97,7 +92,6 @@ export class SensorsGateway
       client.leave('sensors:all');
     }
 
-    this.logger.log(`Client ${client.id} unsubscribed`);
     client.emit('unsubscribed', data);
   }
 }

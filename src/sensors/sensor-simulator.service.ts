@@ -118,6 +118,19 @@ export class SensorSimulatorService {
         data: anomalyData,
       });
 
+      // Broadcast anomaly data via WebSocket
+      this.sensorsGateway.broadcastSensorUpdate({
+        udi: result.udi,
+        machine_id: result.machineId,
+        product_id: result.productId,
+        air_temp: result.airTemp,
+        process_temp: result.processTemp,
+        rotational_speed: result.rotationalSpeed,
+        torque: result.torque,
+        tool_wear: result.toolWear,
+        timestamp: result.timestamp,
+      });
+
       this.logger.log(`Generated anomaly data for machine ${machineId}`);
       return result;
     } catch (error) {
@@ -128,12 +141,10 @@ export class SensorSimulatorService {
 
   startSimulation() {
     this.isRunning = true;
-    this.logger.log('Sensor simulation started');
   }
 
   stopSimulation() {
     this.isRunning = false;
-    this.logger.log('Sensor simulation stopped');
   }
 
   getStatus() {

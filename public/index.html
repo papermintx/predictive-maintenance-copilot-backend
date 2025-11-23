@@ -3,683 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Test - Predictive Maintenance</title>
+    <title>Predictive Maintenance - Real-time Monitoring</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Socket.IO -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+        .slide-up { animation: slide-up 0.5s ease-out; }
+        .glow-effect { animation: glow 2s ease-in-out infinite; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-            margin-bottom: 20px;
+        .gradient-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        h1 { font-size: 28px; margin-bottom: 10px; }
-        .subtitle { font-size: 14px; opacity: 0.9; }
-        .content { padding: 30px; }
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-        .form-group { margin-bottom: 15px; }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-right: 10px;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .status {
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .connection-status {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .connection-status.connected { background: #d4edda; color: #155724; }
-        .connection-status.disconnected { background: #f8d7da; color: #721c24; }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-        .connected .status-dot { background: #28a745; }
-        .disconnected .status-dot { background: #dc3545; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .hidden { display: none; }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
+        
         .machine-card {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            transition: all 0.3s;
-            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .machine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .machine-card:hover::before {
+            left: 100%;
         }
         .machine-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-5px) scale(1.02);
         }
-        .machine-card.active {
-            border-color: #28a745;
-            background: #d4edda;
-        }
-        .machine-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        .machine-info {
-            font-size: 13px;
-            color: #666;
-            margin: 5px 0;
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            margin: 5px 5px 5px 0;
-        }
-        .badge-operational { background: #d4edda; color: #155724; }
-        .badge-maintenance { background: #fff3cd; color: #856404; }
-        .badge-offline { background: #f8d7da; color: #721c24; }
-        .sensor-data {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-        .sensor-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .sensor-item {
-            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #e9ecef;
-        }
-        .sensor-label {
-            font-size: 11px;
-            color: #6c757d;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .sensor-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #333;
-        }
-        .sensor-unit {
-            font-size: 12px;
-            color: #6c757d;
-            margin-left: 2px;
-        }
-        .timestamp {
-            font-size: 11px;
-            color: #6c757d;
-            text-align: center;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #e9ecef;
-        }
+        
         .log-container {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            border-radius: 8px;
-            padding: 15px;
-            max-height: 400px;
-            overflow-y: auto;
+            background: #1e293b;
             font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.6;
         }
         .log-entry {
-            padding: 5px;
-            margin: 3px 0;
-            border-left: 3px solid #667eea;
-            padding-left: 10px;
+            border-left: 3px solid #3b82f6;
+            transition: background 0.3s;
         }
-        .log-time {
-            color: #858585;
-            font-size: 11px;
-        }
-        .log-data {
-            color: #4ec9b0;
+        .log-entry:hover {
+            background: rgba(59, 130, 246, 0.1);
         }
     </style>
 </head>
-<body>
-    <div class="container">
+<body class="gradient-bg min-h-screen">
+    <!-- Global Loading Overlay -->
+    <div id="globalLoading" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mb-4"></div>
+            <p class="loading-message text-lg font-semibold text-gray-800">Loading...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
         <!-- Header -->
-        <div class="card">
-            <div class="header">
-                <h1>🔌 WebSocket Realtime Test</h1>
-                <p class="subtitle">Predictive Maintenance Monitoring System</p>
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6 slide-up">
+            <div class="gradient-bg text-white p-8 text-center">
+                <div class="flex items-center justify-center mb-3">
+                    <i class="bi bi-broadcast text-5xl mr-4"></i>
+                    <h1 class="text-4xl font-bold">Real-time Monitoring</h1>
+                </div>
+                <p class="text-lg opacity-90">Predictive Maintenance System</p>
             </div>
         </div>
 
         <!-- Login Section -->
-        <div id="loginSection" class="card">
-            <div class="content">
-                <div class="section-title">🔐 Login</div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="admin@example.com" value="test@example.com">
+        <div id="loginSection" class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md mx-auto slide-up">
+            <div class="p-8">
+                <div class="flex items-center mb-6">
+                    <i class="bi bi-shield-lock text-3xl text-indigo-600 mr-3"></i>
+                    <h2 class="text-2xl font-bold text-gray-800">Login</h2>
                 </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="Password" value="password123">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="bi bi-envelope mr-2"></i>Email
+                    </label>
+                    <input type="email" id="loginEmail" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition duration-200"
+                           placeholder="admin@example.com" value="test@example.com">
                 </div>
-                <button class="btn-primary" onclick="login()">Login</button>
-                <div id="loginStatus"></div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="bi bi-key mr-2"></i>Password
+                    </label>
+                    <input type="password" id="loginPassword" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition duration-200"
+                           placeholder="Password" value="password123">
+                </div>
+                
+                <button onclick="login()" 
+                        class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition duration-200 transform hover:scale-105">
+                    <i class="bi bi-box-arrow-in-right mr-2"></i>Login
+                </button>
+                
+                <div id="loginStatus" class="mt-4"></div>
             </div>
         </div>
 
         <!-- Main Section -->
-        <div id="mainSection" class="hidden">
-            <!-- WebSocket Controls -->
-            <div class="card">
-                <div class="content">
-                    <div class="section-title">📡 WebSocket Controls</div>
-                    <div id="connectionStatus" class="connection-status disconnected">
-                        <span class="status-dot"></span>
-                        Disconnected
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <button class="btn-success" onclick="connectWebSocket()">Connect</button>
-                        <button class="btn-danger" onclick="disconnectWebSocket()">Disconnect</button>
-                        <button class="btn-primary" onclick="subscribeAll()">Subscribe All</button>
-                        <button class="btn-danger" onclick="logout()">Logout</button>
+        <div id="mainSection" class="hidden space-y-6">
+            <!-- Control Panel -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 slide-up">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- WebSocket Controls -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <i class="bi bi-broadcast-pin mr-2"></i>WebSocket
+                            </h3>
+                            <div id="connectionStatus" class="px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-700">
+                                <span class="pulse-dot inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                                Disconnected
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="connectWebSocket()" 
+                                    class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-plug mr-2"></i>Connect
+                            </button>
+                            <button onclick="disconnectWebSocket()" 
+                                    class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-x-circle mr-2"></i>Disconnect
+                            </button>
+                            <button onclick="subscribeAll()" 
+                                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-broadcast mr-2"></i>Subscribe All
+                            </button>
+                            <button onclick="logout()" 
+                                    class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                                <i class="bi bi-box-arrow-right mr-2"></i>Logout
+                            </button>
+                        </div>
                     </div>
                     
-                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e9ecef;">
-                        <div style="margin-bottom: 10px; font-weight: 600; color: #555;">
-                            🎮 Sensor Simulator Controls <span id="simulatorStatus" style="font-size: 12px; color: #6c757d;">(Unknown)</span>
+                    <!-- Simulator Controls -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <i class="bi bi-cpu mr-2"></i>Simulator Controls
+                            </h3>
                         </div>
-                        <button class="btn-success" onclick="startSimulator()">▶️ Start Simulator</button>
-                        <button class="btn-danger" onclick="stopSimulator()">⏹️ Stop Simulator</button>
-                        <button class="btn-primary" onclick="checkSimulatorStatus()">🔄 Check Status</button>
+                        
+                        <!-- Normal Simulator -->
+                        <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-gray-700">
+                                    <i class="bi bi-gear mr-1"></i>Normal Simulator
+                                </span>
+                                <div id="simulatorNormalStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                    <i class="bi bi-question-circle mr-1"></i>Unknown
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="startNormalSimulator()" 
+                                        class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-play-fill mr-1"></i>Start
+                                </button>
+                                <button onclick="stopSimulator()" 
+                                        class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-stop-fill mr-1"></i>Stop
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Anomaly Simulator -->
+                        <div class="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-red-700">
+                                    <i class="bi bi-exclamation-triangle mr-1"></i>Anomaly Simulator
+                                </span>
+                                <div id="simulatorAnomalyStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                    <i class="bi bi-question-circle mr-1"></i>Stopped
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="startAnomalySimulator()" 
+                                        class="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-play-fill mr-1"></i>Start
+                                </button>
+                                <button onclick="stopSimulator()" 
+                                        class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                                    <i class="bi bi-stop-fill mr-1"></i>Stop
+                                </button>
+                            </div>
+                            <p class="text-xs text-red-600 mt-2">
+                                <i class="bi bi-info-circle mr-1"></i>Only one simulator can run at a time
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Machines Grid -->
-            <div class="card">
-                <div class="content">
-                    <div class="section-title">⚙️ Machines <span id="machineCount" style="color: #667eea;">(0)</span></div>
-                    <div id="machinesGrid" class="grid">
-                        <p style="color: #6c757d;">Loading machines...</p>
+            <!-- Machines Grid with Embedded Sensor Data -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 slide-up">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="bi bi-gear-wide-connected mr-2"></i>Machines
+                        <span id="machineCount" class="text-indigo-600">(0)</span>
+                    </h3>
+                    <div class="text-sm text-gray-600">
+                        <i class="bi bi-info-circle mr-1"></i>Click to subscribe/unsubscribe
                     </div>
                 </div>
-            </div>
-
-            <!-- Sensor Readings -->
-            <div class="card">
-                <div class="content">
-                    <div class="section-title">📊 Real-time Sensor Readings <span id="sensorCount" style="color: #667eea;">(0)</span></div>
-                    <div id="sensorReadingsGrid" class="grid">
-                        <p style="color: #6c757d;">No sensor data yet. Start the simulator and subscribe to machines.</p>
+                <div id="machinesGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="bi bi-hourglass-split text-4xl mb-2"></i>
+                        <p>Loading machines...</p>
                     </div>
                 </div>
             </div>
 
             <!-- Logs -->
-            <div class="card">
-                <div class="content">
-                    <div class="section-title">📋 Realtime Logs</div>
-                    <div id="logs" class="log-container"></div>
-                </div>
+            <div class="bg-white rounded-2xl shadow-xl p-6 slide-up">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="bi bi-terminal mr-2"></i>Real-time Logs
+                </h3>
+                <div id="logs" class="log-container rounded-lg p-4 max-h-96 overflow-y-auto"></div>
             </div>
         </div>
     </div>
 
-    <script>
-        const API_URL = window.location.origin;
-        let socket = null;
-        let accessToken = null;
-        let machines = [];
-        let subscribedMachines = new Set();
-        let latestSensorData = new Map();
-
-        async function login() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            try {
-                const response = await fetch(`${API_URL}/auth/signin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                if (!response.ok) throw new Error('Login failed');
-                
-                const data = await response.json();
-                accessToken = data.accessToken;
-                
-                showStatus('loginStatus', 'Login successful!', 'success');
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('mainSection').classList.remove('hidden');
-                
-                await fetchMachines();
-                await checkSimulatorStatus(); // Check simulator status after login
-            } catch (error) {
-                showStatus('loginStatus', 'Login failed: ' + error.message, 'error');
-            }
-        }
-
-        async function fetchMachines() {
-            try {
-                const response = await fetch(`${API_URL}/machines?limit=100`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                
-                const result = await response.json();
-                machines = result.data || result;
-                renderMachines();
-                log(`Loaded ${machines.length} machines`);
-            } catch (error) {
-                log('Failed to fetch machines: ' + error.message, 'error');
-            }
-        }
-
-        function renderMachines() {
-            const grid = document.getElementById('machinesGrid');
-            document.getElementById('machineCount').textContent = `(${machines.length})`;
-            
-            if (machines.length === 0) {
-                grid.innerHTML = '<p style="color: #6c757d;">No machines found</p>';
-                return;
-            }
-            
-            grid.innerHTML = machines.map(machine => {
-                const isActive = subscribedMachines.has(machine.id);
-                const sensorData = latestSensorData.get(machine.id);
-                
-                return `
-                    <div class="machine-card ${isActive ? 'active' : ''}" onclick="toggleMachine('${machine.id}')">
-                        <div class="machine-title">${machine.name || machine.productId}</div>
-                        <div class="machine-info">ID: ${machine.productId}</div>
-                        <div class="machine-info">Type: ${machine.type} | Location: ${machine.location || '-'}</div>
-                        <div>
-                            <span class="badge badge-${machine.status}">${machine.status}</span>
-                            ${isActive ? '<span class="badge" style="background:#28a745;color:white">Subscribed</span>' : ''}
-                            ${sensorData ? '<span class="badge" style="background:#17a2b8;color:white">Live Data</span>' : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            // Render sensor readings
-            renderSensorReadings();
-        }
-
-        function renderSensorReadings() {
-            const grid = document.getElementById('sensorReadingsGrid');
-            const sensorDataArray = Array.from(latestSensorData.values());
-            document.getElementById('sensorCount').textContent = `(${sensorDataArray.length})`;
-            
-            if (sensorDataArray.length === 0) {
-                grid.innerHTML = '<p style="color: #6c757d;">No sensor data yet. Start the simulator and subscribe to machines.</p>';
-                return;
-            }
-            
-            grid.innerHTML = sensorDataArray.map(sensorData => {
-                const machine = machines.find(m => m.id === sensorData.machineId);
-                const machineName = machine ? (machine.name || machine.productId) : sensorData.productId || 'Unknown';
-                
-                return `
-                    <div class="machine-card" style="border-color: #17a2b8;">
-                        <div class="machine-title">📊 ${machineName}</div>
-                        <div class="machine-info">UDI: ${sensorData.udi} | Product ID: ${sensorData.productId}</div>
-                        <div class="sensor-data" style="margin-top: 10px;">
-                            <div class="sensor-row">
-                                <div class="sensor-item">
-                                    <div class="sensor-label">Air Temp</div>
-                                    <div class="sensor-value">${sensorData.airTemp.toFixed(1)}<span class="sensor-unit">K</span></div>
-                                </div>
-                                <div class="sensor-item">
-                                    <div class="sensor-label">Process Temp</div>
-                                    <div class="sensor-value">${sensorData.processTemp.toFixed(1)}<span class="sensor-unit">K</span></div>
-                                </div>
-                                <div class="sensor-item">
-                                    <div class="sensor-label">Speed</div>
-                                    <div class="sensor-value">${sensorData.rotationalSpeed}<span class="sensor-unit">RPM</span></div>
-                                </div>
-                            </div>
-                            <div class="sensor-row">
-                                <div class="sensor-item">
-                                    <div class="sensor-label">Torque</div>
-                                    <div class="sensor-value">${sensorData.torque.toFixed(1)}<span class="sensor-unit">Nm</span></div>
-                                </div>
-                                <div class="sensor-item">
-                                    <div class="sensor-label">Tool Wear</div>
-                                    <div class="sensor-value">${sensorData.toolWear}<span class="sensor-unit">min</span></div>
-                                </div>
-                                <div class="sensor-item" style="background: linear-gradient(135deg, #17a2b820 0%, #17a2b840 100%);">
-                                    <div class="sensor-label">Status</div>
-                                    <div class="sensor-value" style="font-size: 14px; color: #17a2b8;">●</div>
-                                </div>
-                            </div>
-                            <div class="timestamp">⏱️ Last Update: ${new Date(sensorData.timestamp).toLocaleString()}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function toggleMachine(machineId) {
-            if (!socket || !socket.connected) {
-                alert('Please connect to WebSocket first!');
-                return;
-            }
-            
-            if (subscribedMachines.has(machineId)) {
-                socket.emit('unsubscribe', { machineId });
-                subscribedMachines.delete(machineId);
-                log(`Unsubscribed from machine ${machineId}`);
-            } else {
-                socket.emit('subscribe:sensor', { machineId });
-                subscribedMachines.add(machineId);
-                log(`Subscribed to machine ${machineId}`);
-            }
-            
-            renderMachines();
-        }
-
-        function connectWebSocket() {
-            if (!accessToken) {
-                alert('Please login first!');
-                return;
-            }
-            
-            socket = io(`${API_URL}/sensors`, {
-                auth: { token: accessToken }
-            });
-            
-            socket.on('connect', () => {
-                updateConnectionStatus(true);
-                log('🟢 Connected to WebSocket');
-            });
-            
-            socket.on('disconnect', () => {
-                updateConnectionStatus(false);
-                log('🔴 Disconnected from WebSocket');
-            });
-            
-            socket.on('sensor:update', (data) => {
-                // Transform snake_case ke camelCase
-                const sensorData = {
-                    udi: data.udi,
-                    machineId: data.machine_id,
-                    productId: data.product_id,
-                    timestamp: data.timestamp,
-                    airTemp: data.air_temp,
-                    processTemp: data.process_temp,
-                    rotationalSpeed: data.rotational_speed,
-                    torque: data.torque,
-                    toolWear: data.tool_wear
-                };
-                log(`📊 Sensor update: Machine ${sensorData.productId || sensorData.machineId}`, sensorData);
-                latestSensorData.set(sensorData.machineId, sensorData);
-                renderMachines();
-            });
-            
-            socket.on('sensors:update', (data) => {
-                // Transform snake_case ke camelCase
-                const sensorData = {
-                    udi: data.udi,
-                    machineId: data.machine_id,
-                    productId: data.product_id,
-                    timestamp: data.timestamp,
-                    airTemp: data.air_temp,
-                    processTemp: data.process_temp,
-                    rotationalSpeed: data.rotational_speed,
-                    torque: data.torque,
-                    toolWear: data.tool_wear
-                };
-                log(`📊 Sensor update (all): Machine ${sensorData.productId || sensorData.machineId}`, sensorData);
-                latestSensorData.set(sensorData.machineId, sensorData);
-                renderMachines();
-            });
-            
-            socket.on('subscribed', (data) => {
-                log('✅ Subscribed successfully', data);
-            });
-        }
-
-        function disconnectWebSocket() {
-            if (socket) {
-                socket.disconnect();
-                socket = null;
-                subscribedMachines.clear();
-                renderMachines();
-            }
-        }
-
-        function subscribeAll() {
-            if (!socket || !socket.connected) {
-                alert('Please connect to WebSocket first!');
-                return;
-            }
-            
-            socket.emit('subscribe:all-sensors');
-            log('📡 Subscribed to all sensors');
-        }
-
-        function updateConnectionStatus(connected) {
-            const status = document.getElementById('connectionStatus');
-            if (connected) {
-                status.className = 'connection-status connected';
-                status.innerHTML = '<span class="status-dot"></span>Connected';
-            } else {
-                status.className = 'connection-status disconnected';
-                status.innerHTML = '<span class="status-dot"></span>Disconnected';
-            }
-        }
-
-        function log(message, data) {
-            const logs = document.getElementById('logs');
-            const time = new Date().toLocaleTimeString();
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `
-                <span class="log-time">[${time}]</span> ${message}
-                ${data ? `<pre class="log-data">${JSON.stringify(data, null, 2)}</pre>` : ''}
-            `;
-            logs.insertBefore(entry, logs.firstChild);
-            
-            // Limit to 50 entries
-            while (logs.children.length > 50) {
-                logs.removeChild(logs.lastChild);
-            }
-        }
-
-        function showStatus(elementId, message, type) {
-            const element = document.getElementById(elementId);
-            element.className = `status status-${type}`;
-            element.textContent = message;
-        }
-
-        function logout() {
-            if (socket) socket.disconnect();
-            accessToken = null;
-            machines = [];
-            subscribedMachines.clear();
-            latestSensorData.clear();
-            document.getElementById('mainSection').classList.add('hidden');
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('loginStatus').textContent = '';
-            log('👋 Logged out');
-        }
-
-        // Simulator Control Functions
-        async function startSimulator() {
-            if (!accessToken) {
-                alert('Please login first!');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_URL}/sensors/simulator/start`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                
-                if (!response.ok) throw new Error('Failed to start simulator');
-                
-                const data = await response.json();
-                log(`✅ Simulator started: ${data.message}`, data);
-                updateSimulatorStatus('Running ✅');
-                
-                // Auto check status after 2 seconds
-                setTimeout(checkSimulatorStatus, 2000);
-            } catch (error) {
-                log(`❌ Failed to start simulator: ${error.message}`, null);
-                alert('Failed to start simulator: ' + error.message);
-            }
-        }
-        
-        async function stopSimulator() {
-            if (!accessToken) {
-                alert('Please login first!');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_URL}/sensors/simulator/stop`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                
-                if (!response.ok) throw new Error('Failed to stop simulator');
-                
-                const data = await response.json();
-                log(`⏹️ Simulator stopped: ${data.message}`, data);
-                updateSimulatorStatus('Stopped ⏹️');
-            } catch (error) {
-                log(`❌ Failed to stop simulator: ${error.message}`, null);
-                alert('Failed to stop simulator: ' + error.message);
-            }
-        }
-        
-        async function checkSimulatorStatus() {
-            if (!accessToken) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_URL}/sensors/simulator/status`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                
-                if (!response.ok) throw new Error('Failed to check status');
-                
-                const data = await response.json();
-                const status = data.isRunning ? 'Running ✅' : 'Stopped ⏹️';
-                updateSimulatorStatus(status);
-                log(`📊 Simulator status: ${status}`, data);
-            } catch (error) {
-                log(`❌ Failed to check simulator status: ${error.message}`, null);
-                updateSimulatorStatus('Error ❌');
-            }
-        }
-        
-        function updateSimulatorStatus(status) {
-            const statusElement = document.getElementById('simulatorStatus');
-            if (statusElement) {
-                statusElement.textContent = `(${status})`;
-                statusElement.style.color = status.includes('✅') ? '#28a745' : 
-                                           status.includes('⏹️') ? '#dc3545' : '#6c757d';
-            }
-        }
-
-        // Auto-refresh machines every 30 seconds
-        setInterval(() => {
-            if (accessToken && !document.getElementById('mainSection').classList.contains('hidden')) {
-                fetchMachines();
-            }
-        }, 30000);
-        
-        // Auto-check simulator status every 10 seconds
-        setInterval(() => {
-            if (accessToken && !document.getElementById('mainSection').classList.contains('hidden')) {
-                checkSimulatorStatus();
-            }
-        }, 10000);
-    </script>
+    <!-- External JavaScript -->
+    <script src="/app.js"></script>
 </body>
 </html>

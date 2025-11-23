@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Portal - Maintenance Tickets</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .slide-up { animation: slide-up 0.5s ease-out; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .ticket-card {
+            transition: all 0.3s ease;
+        }
+        .ticket-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .status-badge {
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Global Loading Overlay -->
+    <div id="globalLoading" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-600 mb-4"></div>
+            <p class="loading-message text-lg font-semibold text-gray-800">Loading...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6 slide-up">
+            <div class="gradient-bg text-white p-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="bi bi-tools text-5xl mr-4"></i>
+                        <div>
+                            <h1 class="text-4xl font-bold">Technician Portal</h1>
+                            <p class="text-lg opacity-90">Maintenance Ticket Management</p>
+                        </div>
+                    </div>
+                    <div id="userInfo" class="text-right hidden">
+                        <p class="text-sm opacity-80">Logged in as</p>
+                        <p class="font-semibold" id="userName"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md mx-auto slide-up">
+            <div class="p-8">
+                <div class="flex items-center mb-6">
+                    <i class="bi bi-shield-lock text-3xl text-amber-600 mr-3"></i>
+                    <h2 class="text-2xl font-bold text-gray-800">Technician Login</h2>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="bi bi-envelope mr-2"></i>Email
+                    </label>
+                    <input type="email" id="loginEmail" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition duration-200"
+                           placeholder="technician@example.com">
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="bi bi-key mr-2"></i>Password
+                    </label>
+                    <input type="password" id="loginPassword" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition duration-200"
+                           placeholder="Password">
+                </div>
+                
+                <button onclick="login()" 
+                        class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition duration-200 transform hover:scale-105">
+                    <i class="bi bi-box-arrow-in-right mr-2"></i>Login
+                </button>
+                
+                <div id="loginStatus" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Main Section -->
+        <div id="mainSection" class="hidden">
+            <!-- Filter & Stats -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 slide-up">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Stats Cards -->
+                    <div class="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-red-600 font-semibold">Open</p>
+                                <p id="statOpen" class="text-3xl font-bold text-red-700">0</p>
+                            </div>
+                            <i class="bi bi-inbox text-4xl text-red-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-blue-600 font-semibold">In Progress</p>
+                                <p id="statInProgress" class="text-3xl font-bold text-blue-700">0</p>
+                            </div>
+                            <i class="bi bi-gear text-4xl text-blue-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-green-600 font-semibold">Closed</p>
+                                <p id="statClosed" class="text-3xl font-bold text-green-700">0</p>
+                            </div>
+                            <i class="bi bi-check-circle text-4xl text-green-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600 font-semibold">Canceled</p>
+                                <p id="statCanceled" class="text-3xl font-bold text-gray-700">0</p>
+                            </div>
+                            <i class="bi bi-x-circle text-4xl text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filter -->
+                <div class="mt-6 flex items-center gap-4">
+                    <label class="font-semibold text-gray-700">
+                        <i class="bi bi-filter mr-2"></i>Filter:
+                    </label>
+                    <select id="filterStatus" onchange="filterTickets()" 
+                            class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-200">
+                        <option value="all">All Tickets</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="closed">Closed</option>
+                        <option value="canceled">Canceled</option>
+                    </select>
+                    
+                    <button onclick="fetchTickets()" 
+                            class="ml-auto bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="bi bi-arrow-clockwise mr-2"></i>Refresh
+                    </button>
+                    
+                    <button onclick="logout()" 
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="bi bi-box-arrow-right mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tickets List -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 slide-up">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="bi bi-ticket-perforated mr-2"></i>Maintenance Tickets
+                        <span id="ticketCount" class="text-amber-600">(0)</span>
+                    </h3>
+                </div>
+                
+                <div id="ticketsContainer" class="space-y-4">
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="bi bi-hourglass-split text-4xl mb-2"></i>
+                        <p>Loading tickets...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Ticket Modal -->
+    <div id="updateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">
+                    <i class="bi bi-pencil-square mr-2"></i>Update Ticket
+                </h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="bi bi-x-lg text-2xl"></i>
+                </button>
+            </div>
+            
+            <div id="modalContent" class="space-y-4">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/technician.js"></script>
+</body>
+</html>
