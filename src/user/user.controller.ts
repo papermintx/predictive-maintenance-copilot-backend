@@ -41,7 +41,10 @@ export class UserController {
         throw new Error('Invalid role');
       }
     }
-    return this.userService.updateUser(id, updateData);
+    return this.userService.updateUser(id, {
+      ...updateData,
+      role: updateData.role as UserRole | undefined,
+    });
   }
 
   @Patch(':id/role')
