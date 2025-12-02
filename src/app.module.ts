@@ -14,6 +14,7 @@ import { MachineModule } from './machine/machine.module';
 import { SensorsModule } from './sensors/sensors.module';
 import { MaintenanceTicketModule } from './maintenance-ticket/maintenance-ticket.module';
 import { ChatModule } from './chat/chat.module';
+import { PredictionModule } from './prediction/prediction.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ChatModule } from './chat/chat.module';
     SensorsModule,
     ChatModule,
     MaintenanceTicketModule,
+    PredictionModule,
   ],
   controllers: [AppController],
   providers: [

@@ -34,10 +34,24 @@ export class UserService {
     });
   }
 
-  async updateUser(id: string, data: { fullName?: string; role?: UserRole }) {
+  async updateUser(id: string, data: { fullName?: string; email?: string; role?: UserRole | string }) {
+    const updateData: any = {};
+    
+    if (data.fullName !== undefined) {
+      updateData.fullName = data.fullName;
+    }
+    
+    if (data.email !== undefined) {
+      updateData.email = data.email;
+    }
+    
+    if (data.role !== undefined) {
+      updateData.role = data.role as UserRole;
+    }
+    
     return this.prisma.user.update({
       where: { id },
-      data,
+      data: updateData,
     });
   }
 
