@@ -41,18 +41,14 @@ RUN npm ci --only=production
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-# Copy built application from builder
+# Copy built application from builder (including public assets that Nest CLI copies)
 COPY --from=builder /app/dist ./dist
 
-# Copy public folder for static assets
+# Also copy public folder to root for static serving
 COPY --from=builder /app/public ./public
-
-# Verify files were copied
-RUN ls -la dist/ && echo "✓ dist folder exists" || echo "✗ dist folder missing"
-RUN test -f dist/main.js && echo "✓ main.js exists" || echo "✗ main.js missing"
 
 # Expose port (Cloud Run will set PORT env variable)
 EXPOSE 8080
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
