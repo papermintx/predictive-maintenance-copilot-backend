@@ -285,14 +285,12 @@ export class AuthService {
   async updatePassword(accessToken: string, newPassword: string) {
     try {
       // Update password di Supabase menggunakan access token
-      const result = await this.supabaseService.updatePassword(
-        accessToken,
-        newPassword,
-      );
+      await this.supabaseService.updatePassword(accessToken, newPassword);
 
       return {
         success: true,
-        message: 'Password updated successfully. You can now log in with your new password.',
+        message:
+          'Password updated successfully. You can now log in with your new password.',
       };
     } catch (error: any) {
       console.error('❌ Update password error:', error);

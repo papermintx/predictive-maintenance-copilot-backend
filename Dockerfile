@@ -14,7 +14,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Generate Prisma Client
+# Generate Prisma Client (with placeholder DATABASE_URL)
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN npx prisma generate
 
 # Build the application
@@ -43,10 +44,6 @@ COPY --from=builder /app/dist ./dist
 # Expose port (Cloud Run uses PORT env variable)
 ENV PORT=8080
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
-  CMD node -e "require('http').get('http://localhost:${PORT}/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 # Start the application
 CMD ["node", "dist/main.js"]

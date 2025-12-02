@@ -62,11 +62,13 @@ jobs:
             --set-env-vars="SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}" \
             --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
             --set-env-vars="NODE_ENV=production" \
-            --memory=512Mi \
-            --cpu=1 \
+            --set-env-vars="PORT=8080" \
+            --memory=1Gi \
+            --cpu=2 \
             --timeout=300 \
             --max-instances=10 \
-            --min-instances=0
+            --min-instances=0 \
+            --startup-cpu-boost
 
       - name: Show deployment URL
         run: |
