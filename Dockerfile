@@ -21,6 +21,9 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
+# Verify dist folder exists
+RUN ls -la dist/
+
 # Stage 2: Production
 FROM node:20-alpine AS production
 
@@ -43,6 +46,10 @@ COPY --from=builder /app/dist ./dist
 
 # Copy public folder for static assets
 COPY --from=builder /app/public ./public
+
+# Verify files were copied
+RUN ls -la dist/ && echo "✓ dist folder exists" || echo "✗ dist folder missing"
+RUN test -f dist/main.js && echo "✓ main.js exists" || echo "✗ main.js missing"
 
 # Expose port (Cloud Run will set PORT env variable)
 EXPOSE 8080
