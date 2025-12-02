@@ -62,7 +62,6 @@ jobs:
             --set-env-vars="SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}" \
             --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
             --set-env-vars="NODE_ENV=production" \
-            --set-env-vars="PORT=8080" \
             --memory=1Gi \
             --cpu=2 \
             --timeout=300 \
