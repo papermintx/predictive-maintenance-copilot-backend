@@ -41,8 +41,10 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
-# Expose port (Cloud Run uses PORT env variable)
-ENV PORT=8080
+# Copy public folder for static assets
+COPY --from=builder /app/public ./public
+
+# Expose port (Cloud Run will set PORT env variable)
 EXPOSE 8080
 
 # Start the application

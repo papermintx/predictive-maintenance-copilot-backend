@@ -67,7 +67,8 @@ jobs:
             --timeout=300 \
             --max-instances=10 \
             --min-instances=0 \
-            --cpu-boost
+            --cpu-boost \
+            --no-cpu-throttling
 
       - name: Show deployment URL
         run: |
