@@ -1051,6 +1051,292 @@
         }
       ],
       "description": "Maintenance ticket management endpoints. Technician role required for status updates."
+    },
+    {
+      "name": "Predictions",
+      "item": [
+        {
+          "name": "Get All Predictions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/predictions?limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "description": "Number of results to return (default: 100)"
+                },
+                {
+                  "key": "machineId",
+                  "value": "",
+                  "description": "Filter by machine ID (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all prediction results with optional filtering by machine ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Prediction Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/predictions/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", "statistics"]
+            },
+            "description": "Get statistics about predictions:\n- Total predictions\n- High risk count\n- Failure predicted count\n- Anomalies count\n- Average risk score"
+          },
+          "response": []
+        },
+        {
+          "name": "Get High Risk Predictions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/predictions/high-risk?threshold=0.7&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", "high-risk"],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "0.7",
+                  "description": "Risk score threshold (default: 0.7)"
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Number of results (default: 50)"
+                }
+              ]
+            },
+            "description": "Get predictions with high risk score (above threshold)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Failure Predictions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/predictions/failures?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", "failures"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Number of results (default: 50)"
+                }
+              ]
+            },
+            "description": "Get predictions where failure is predicted"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Anomaly Predictions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/predictions/anomalies?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", "anomalies"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Number of results (default: 50)"
+                }
+              ]
+            },
+            "description": "Get predictions with detected anomalies"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Predictions by Machine",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/predictions/machine/:machineId?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", "machine", ":machineId"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Number of results (default: 50)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "machineId",
+                  "value": "{{machineId}}",
+                  "description": "Machine UUID - Replace with actual machine ID"
+                }
+              ]
+            },
+            "description": "Get all predictions for a specific machine"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Prediction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/predictions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Prediction UUID - Replace with actual prediction ID from database"
+                }
+              ]
+            },
+            "description": "Get a single prediction by ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "Prediction results API endpoints. Get prediction data from database with various filters."
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Get list of all users in the system. Requires admin role.\n\nResponse:\n- Array of user objects with fields:\n  - id (UUID): User ID\n  - email (string): User email\n  - fullName (string): Full name\n  - role (string): User role (admin, operator, technician, viewer)\n  - isActive (boolean): Account active status\n  - createdAt (ISO string): Account creation date\n  - updatedAt (ISO string): Last update date"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"updated@example.com\",\n  \"fullName\": \"Updated Name\",\n  \"role\": \"technician\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "User UUID - Replace with actual user ID from GET /users"
+                }
+              ]
+            },
+            "description": "Update user information (email, fullName, role). Requires admin role.\n\nPath parameters:\n- id (UUID): User ID to update\n\nRequest body:\n- email (string, optional): New email address\n- fullName (string, optional): New full name\n- role (string, optional): New role (admin, operator, technician, viewer)\n\nResponse:\n- Updated user object"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"technician\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":id", "role"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "User UUID - Replace with actual user ID from GET /users"
+                }
+              ]
+            },
+            "description": "Update user role only. Requires admin role.\n\nPath parameters:\n- id (UUID): User ID to update\n\nRequest body:\n- role (string, required): New role (admin, operator, technician, viewer)\n\nResponse:\n- Updated user object"
+          },
+          "response": []
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":id", "activate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "User UUID - Replace with actual user ID from GET /users"
+                }
+              ]
+            },
+            "description": "Activate a user account. Requires admin role.\n\nPath parameters:\n- id (UUID): User ID to activate\n\nResponse:\n- Updated user object with isActive: true"
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":id", "deactivate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "User UUID - Replace with actual user ID from GET /users"
+                }
+              ]
+            },
+            "description": "Deactivate a user account. Requires admin role.\n\nPath parameters:\n- id (UUID): User ID to deactivate\n\nResponse:\n- Updated user object with isActive: false"
+          },
+          "response": []
+        }
+      ],
+      "description": "User management endpoints. Admin role required for all operations."
     }
   ],
   "variable": [
