@@ -8,6 +8,18 @@ export class SensorSimulatorService {
   private logger = new Logger('SensorSimulatorService');
   private isRunning = false;
 
+  // State untuk setiap machine agar nilai berubah smooth
+  private machineStates = new Map<
+    string,
+    {
+      airTemp: number;
+      processTemp: number;
+      rotationalSpeed: number;
+      torque: number;
+      toolWear: number;
+    }
+  >();
+
   constructor(
     private prisma: PrismaService,
     @Inject(forwardRef(() => SensorsGateway))
@@ -35,29 +47,87 @@ export class SensorSimulatorService {
 
       for (const machine of machines) {
         try {
-          // Generate realistic sensor values dengan variasi
+          // Base values (target normal operation)
           const baseTemp = 298.0;
           const baseProcessTemp = 308.0;
           const baseSpeed = 1500;
           const baseTorque = 40;
+          const baseToolWear = 50; // Start from low wear
 
-          // Tambahkan random noise untuk simulasi real-world
-          const airTemp = baseTemp + (Math.random() - 0.5) * 5;
-          const processTemp = baseProcessTemp + (Math.random() - 0.5) * 10;
-          const rotationalSpeed = Math.floor(
-            baseSpeed + (Math.random() - 0.5) * 200,
+          // Get or initialize machine state
+          let state = this.machineStates.get(machine.id);
+
+          if (!state) {
+            // Initialize state dengan nilai awal yang normal
+            state = {
+              airTemp: baseTemp + (Math.random() - 0.5) * 2,
+              processTemp: baseProcessTemp + (Math.random() - 0.5) * 3,
+              rotationalSpeed:
+                baseSpeed + Math.floor((Math.random() - 0.5) * 50),
+              torque: baseTorque + (Math.random() - 0.5) * 3,
+              toolWear: baseToolWear + Math.floor(Math.random() * 20),
+            };
+            this.machineStates.set(machine.id, state);
+          }
+
+          // Smooth transitions - perubahan kecil bertahap (max 1-2% per interval)
+          // Air Temperature: berubah sangat smooth ±0.5°C
+          const airTempChange = (Math.random() - 0.5) * 0.5;
+          const airTemp = this.smoothValue(
+            state.airTemp + airTempChange,
+            baseTemp,
+            2.0, // max deviation
           );
-          const torque = baseTorque + (Math.random() - 0.5) * 15;
-          const toolWear = Math.floor(Math.random() * 200);
+
+          // Process Temperature: sedikit lebih dinamis ±1°C
+          const processTempChange = (Math.random() - 0.5) * 1.0;
+          const processTemp = this.smoothValue(
+            state.processTemp + processTempChange,
+            baseProcessTemp,
+            4.0, // max deviation
+          );
+
+          // Rotational Speed: berubah bertahap ±10 RPM
+          const speedChange = Math.floor((Math.random() - 0.5) * 10);
+          const rotationalSpeed = Math.floor(
+            this.smoothValue(
+              state.rotationalSpeed + speedChange,
+              baseSpeed,
+              30, // max deviation
+            ),
+          );
+
+          // Torque: smooth changes ±0.3 Nm
+          const torqueChange = (Math.random() - 0.5) * 0.3;
+          const torque = this.smoothValue(
+            state.torque + torqueChange,
+            baseTorque,
+            2.5, // max deviation
+          );
+
+          // Tool Wear: gradually increases (realistic wear over time)
+          const toolWearIncrease = Math.random() * 0.1; // Very slow increase
+          const toolWear = Math.min(
+            200,
+            Math.floor(state.toolWear + toolWearIncrease),
+          );
+
+          // Update state untuk next iteration
+          state.airTemp = airTemp;
+          state.processTemp = processTemp;
+          state.rotationalSpeed = rotationalSpeed;
+          state.torque = torque;
+          state.toolWear = toolWear;
+          this.machineStates.set(machine.id, state);
 
           const sensorData = await this.prisma.sensorData.create({
             data: {
               machineId: machine.id,
               productId: machine.productId,
-              airTemp,
-              processTemp,
+              airTemp: parseFloat(airTemp.toFixed(2)),
+              processTemp: parseFloat(processTemp.toFixed(2)),
               rotationalSpeed,
-              torque,
+              torque: parseFloat(torque.toFixed(2)),
               toolWear,
               timestamp: new Date(),
             },
@@ -89,6 +159,25 @@ export class SensorSimulatorService {
     } catch (error) {
       this.logger.error('Failed to generate sensor data:', error);
     }
+  }
+
+  /**
+   * Helper function untuk smooth value changes
+   * Membatasi nilai agar tidak jauh dari base value
+   */
+  private smoothValue(
+    currentValue: number,
+    baseValue: number,
+    maxDeviation: number,
+  ): number {
+    // Jika nilai terlalu jauh dari base, tarik kembali ke base
+    if (currentValue > baseValue + maxDeviation) {
+      return baseValue + maxDeviation;
+    }
+    if (currentValue < baseValue - maxDeviation) {
+      return baseValue - maxDeviation;
+    }
+    return currentValue;
   }
 
   // Generate anomaly sensor data (untuk testing alert)
@@ -141,18 +230,34 @@ export class SensorSimulatorService {
 
   startSimulation() {
     this.isRunning = true;
+    this.logger.log('🟢 Sensor simulator started');
   }
 
   stopSimulation() {
     this.isRunning = false;
+    this.logger.log('🔴 Sensor simulator stopped');
+  }
+
+  /**
+   * Reset state untuk machine tertentu (untuk testing)
+   */
+  resetMachineState(machineId: string) {
+    this.machineStates.delete(machineId);
+    this.logger.log(`Reset state for machine ${machineId}`);
+  }
+
+  /**
+   * Clear all machine states
+   */
+  clearAllStates() {
+    this.machineStates.clear();
+    this.logger.log('Cleared all machine states');
   }
 
   getStatus() {
     return {
       isRunning: this.isRunning,
-      message: this.isRunning
-        ? 'Simulator is running'
-        : 'Simulator is stopped',
+      message: this.isRunning ? 'Simulator is running' : 'Simulator is stopped',
     };
   }
 }

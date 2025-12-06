@@ -14,11 +14,6 @@ async function bootstrap() {
   // Global exception filter for better error messages
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Serve static files from public directory
-  app.useStaticAssets(join(__dirname, '..', 'public'), {
-    prefix: '/',
-  });
-
   // Enable CORS for HTTP and WebSocket
   app.enableCors({
     origin: '*', // Update di production dengan frontend URL
